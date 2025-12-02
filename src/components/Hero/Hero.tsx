@@ -8,9 +8,9 @@ export default function Hero() {
     },
     {
       id: 2,
-      title: "Project Two",
-      description: "Sed do eiusmod tempor incididunt ut labore et dolore magna.",
-      link: "#",
+      title: "EthixFlow",
+      description: "EthixFlow gives employees a safe, secure way to speak up, be heard, and drive positive change.",
+      link: "https://gregarious-ganache-64ee20.netlify.app",
     },
     {
       id: 3,

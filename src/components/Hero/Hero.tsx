@@ -15,7 +15,7 @@ export default function Hero() {
     {
       id: 3,
       title: "Project Three",
-      description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco.",
+      description: "Building something exciting — reveal coming soon.",
       link: "#",
     },
   ];

@@ -28,10 +28,12 @@ export default function Hero() {
           Hi, I&apos;m Londa
         </h1>
         <p className="max-w-2xl text-lg text-gray-600">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-          tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-          veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-          commodo consequat.
+          I&apos;m a developer who builds clean, modern, and
+          maintainable products using TypeScript, Next.js, Tailwind, shadcn,
+          Node.js, and Supabase. I approach development with strategy and
+          intention, leveraging AI to accelerate workflows and improve quality.
+          Whether for clients or my own projects, I focus on creating work
+          that&apos;s practical, high-quality, and built to last.
         </p>
       </div>
 

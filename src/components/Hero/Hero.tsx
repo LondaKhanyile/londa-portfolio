@@ -2,9 +2,9 @@ export default function Hero() {
   const projects = [
     {
       id: 1,
-      title: "Project One",
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      link: "#",
+      title: "TutorFlow",
+      description: "TutorFlow is an AI tutor that helps students learn faster, understand deeper, and ace exams.",
+      link: "https://tutorflow.co.za",
     },
     {
       id: 2,
@@ -45,6 +45,8 @@ export default function Hero() {
             <a
               key={project.id}
               href={project.link}
+              target={project.link.startsWith("http") ? "_blank" : undefined}
+              rel={project.link.startsWith("http") ? "noopener noreferrer" : undefined}
               className="group rounded-lg border border-gray-200 bg-white p-6 transition-all hover:border-gray-300 hover:shadow-lg"
             >
               <h3 className="mb-2 text-xl font-semibold text-gray-900 group-hover:text-gray-600">

@@ -1,7 +1,13 @@
+import Navbar from "@/components/Navbar/Navbar";
+import Hero from "@/components/Hero/Hero";
+import Footer from "@/components/Footer/Footer";
+
 export default function Home() {
   return (
-    <main>
-      <h1>Hello World</h1>
-    </main>
+    <>
+      <Navbar />
+      <Hero />
+      <Footer />
+    </>
   );
 }

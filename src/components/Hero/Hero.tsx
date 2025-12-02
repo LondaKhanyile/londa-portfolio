@@ -17,6 +17,7 @@ export default function Hero() {
       title: "Project Three",
       description: "Building something exciting — reveal coming soon.",
       link: "#",
+      badge: "Coming soon",
     },
   ];
 
@@ -47,8 +48,13 @@ export default function Hero() {
               href={project.link}
               target={project.link.startsWith("http") ? "_blank" : undefined}
               rel={project.link.startsWith("http") ? "noopener noreferrer" : undefined}
-              className="group rounded-lg border border-gray-200 bg-white p-6 transition-all hover:border-gray-300 hover:shadow-lg"
+              className="relative group rounded-lg border border-gray-200 bg-white p-6 transition-all hover:border-gray-300 hover:shadow-lg"
             >
+              {project.badge && (
+                <span className="absolute right-4 top-4 inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                  {project.badge}
+                </span>
+              )}
               <h3 className="mb-2 text-xl font-semibold text-gray-900 group-hover:text-gray-600">
                 {project.title}
               </h3>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ParticleTechStack from "@/components/ParticleTechStack/ParticleTechStack";
 
 const MENU_ITEMS = [
   { href: "#about", label: "About Me" },
@@ -13,6 +14,7 @@ export default function MainMenu() {
       className="relative z-10 flex min-h-screen flex-col justify-center px-6 pt-12 sm:pl-12 sm:pt-16"
       aria-label="Main menu"
     >
+      <ParticleTechStack />
       <nav
         className="flex flex-col gap-6 sm:gap-8"
         aria-label="Primary navigation"

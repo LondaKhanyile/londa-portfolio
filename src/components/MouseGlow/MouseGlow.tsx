@@ -25,13 +25,13 @@ export default function MouseGlow() {
 
   return (
     <div
-      className={`pointer-events-none fixed z-0 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity duration-500 ${isVisible ? "opacity-100" : "opacity-0"}`}
+      className={`pointer-events-none fixed z-0 h-[160px] w-[160px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity duration-500 ${isVisible ? "opacity-100" : "opacity-0"}`}
       style={{
         left: position.x,
         top: position.y,
         background:
           "radial-gradient(circle, rgba(120,119,198,0.12) 0%, transparent 70%)",
-        filter: "blur(60px)",
+        filter: "blur(30px)",
       }}
       aria-hidden
     />

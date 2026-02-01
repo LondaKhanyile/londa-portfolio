@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-syne), ui-sans-serif, system-ui, sans-serif;
+}
+
+@keyframes ambient-shift {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.05) translate(2%, 2%);
+  }
+}
+
+.animate-ambient-shift {
+  animation: ambient-shift 20s ease-in-out infinite;
+}

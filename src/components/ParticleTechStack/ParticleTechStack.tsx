@@ -211,7 +211,7 @@ export default function ParticleTechStack({ embedded = false }: ParticleTechStac
             key={c.name}
             type="button"
             onClick={() => goToConstellation(i)}
-            className={`h-1.5 w-1.5 rounded-full transition-all duration-300 hover:scale-125 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950 ${
+            className={`h-1.5 w-1.5 cursor-pointer rounded-full transition-all duration-300 hover:scale-125 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950 ${
               i === currentConstellation
                 ? "bg-neutral-400 scale-125"
                 : "bg-neutral-600/60 hover:bg-neutral-500/80"

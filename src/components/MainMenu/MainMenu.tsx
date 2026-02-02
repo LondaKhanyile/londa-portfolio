@@ -27,7 +27,7 @@ const DISSOLVE_MS = 2200;
 const BUILD_MS = 1000;
 
 export default function MainMenu() {
-  const [activeSection, setActiveSection] = useState<ActiveSection>(() => getSectionFromHash());
+  const [activeSection, setActiveSection] = useState<ActiveSection>("home");
   const [aboutSlide, setAboutSlide] = useState(0);
   const [aboutReplayKey, setAboutReplayKey] = useState(0);
   const [transitionPhase, setTransitionPhase] = useState<"idle" | "dissolving" | "building">("idle");
@@ -38,6 +38,12 @@ export default function MainMenu() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
+  }, []);
+
+  // Sync activeSection from URL hash after mount (avoids hydration mismatch: server has no hash)
+  useEffect(() => {
+    const section = getSectionFromHash();
+    if (section !== "home") setActiveSection(section);
   }, []);
 
   useEffect(() => {
@@ -181,7 +187,7 @@ export default function MainMenu() {
                     key={i}
                     type="button"
                     onClick={() => setAboutSlide(i)}
-                    className={`h-1.5 w-1.5 rounded-full transition-all duration-300 hover:scale-125 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950 ${
+                    className={`h-1.5 w-1.5 cursor-pointer rounded-full transition-all duration-300 hover:scale-125 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950 ${
                       i === aboutSlide
                         ? "scale-125 bg-neutral-400"
                         : "bg-neutral-600/60 hover:bg-neutral-500/80"
@@ -309,7 +315,7 @@ export default function MainMenu() {
               key={item.label}
               type="button"
               onClick={() => handleNavClick(item)}
-              className={`group relative w-fit text-left text-2xl font-extrabold tracking-[0.1em] transition-all duration-300 hover:scale-105 hover:text-neutral-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.15)] sm:text-3xl md:text-4xl ${
+              className={`group relative w-fit cursor-pointer text-left text-2xl font-extrabold tracking-[0.1em] transition-all duration-300 hover:scale-105 hover:text-neutral-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.15)] sm:text-3xl md:text-4xl ${
                 isActive
                   ? "scale-105 text-neutral-100 drop-shadow-[0_0_6px_rgba(255,255,255,0.2)]"
                   : isInactiveGray

@@ -59,7 +59,9 @@ const LINE_OPACITY = 0.38;
 const CONSTELLATION_DURATION = 16000; // 16s per constellation
 const TRANSITION_DURATION = 10000; // 10s smooth morph between constellations
 
-export default function ParticleTechStack() {
+type ParticleTechStackProps = { embedded?: boolean };
+
+export default function ParticleTechStack({ embedded = false }: ParticleTechStackProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const particleRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [currentConstellation, setCurrentConstellation] = useState(0);
@@ -128,7 +130,11 @@ export default function ParticleTechStack() {
 
   return (
     <div
-      className="absolute left-[64%] top-[53%] flex h-[min(80vh,600px)] w-[min(45vw,420px)] -translate-x-1/2 -translate-y-1/2 flex-col items-center"
+      className={
+        embedded
+          ? "absolute inset-0 flex flex-col items-center justify-start pb-12"
+          : "absolute left-[64%] top-[53%] flex h-[min(80vh,600px)] w-[min(45vw,420px)] -translate-x-1/2 -translate-y-1/2 flex-col items-center"
+      }
       aria-label="Tech stack"
     >
       {/* Constellation label */}
@@ -197,7 +203,7 @@ export default function ParticleTechStack() {
 
       {/* Constellation nav dots */}
       <nav
-        className="mt-4 flex items-center justify-center gap-3"
+        className="mt-0 flex items-center justify-center gap-3"
         aria-label="Constellation navigation"
       >
         {CONSTELLATIONS.map((c, i) => (

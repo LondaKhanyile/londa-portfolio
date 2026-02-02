@@ -2,6 +2,7 @@
 
 import ParticleTechStack from "@/components/ParticleTechStack/ParticleTechStack";
 import DissolveOverlay from "@/components/DissolveOverlay/DissolveOverlay";
+import YouWinSlide from "@/components/YouWinSlide/YouWinSlide";
 import { useState, useRef, useEffect } from "react";
 
 type ActiveSection = "home" | "about" | "projects" | "writing" | "contact";
@@ -14,12 +15,21 @@ const MENU_ITEMS: { id: ActiveSection; href: string; label: string }[] = [
   { id: "contact", href: "#contact", label: "Contact" },
 ];
 
+const SECTIONS: ActiveSection[] = ["home", "about", "projects", "writing", "contact"];
+
+function getSectionFromHash(): ActiveSection {
+  if (typeof window === "undefined") return "home";
+  const h = window.location.hash.slice(1).toLowerCase();
+  return (SECTIONS.includes(h as ActiveSection) ? h : "home") as ActiveSection;
+}
+
 const DISSOLVE_MS = 2200;
 const BUILD_MS = 1000;
 
 export default function MainMenu() {
-  const [activeSection, setActiveSection] = useState<ActiveSection>("home");
+  const [activeSection, setActiveSection] = useState<ActiveSection>(() => getSectionFromHash());
   const [aboutSlide, setAboutSlide] = useState(0);
+  const [aboutReplayKey, setAboutReplayKey] = useState(0);
   const [transitionPhase, setTransitionPhase] = useState<"idle" | "dissolving" | "building">("idle");
   const [nextSection, setNextSection] = useState<ActiveSection | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -30,12 +40,22 @@ export default function MainMenu() {
     };
   }, []);
 
+  useEffect(() => {
+    const onHashChange = () => {
+      if (transitionPhase !== "idle") return;
+      setActiveSection(getSectionFromHash());
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, [transitionPhase]);
+
   const handleNavClick = (item: (typeof MENU_ITEMS)[number]) => {
     if (item.id === activeSection && transitionPhase === "idle") return;
     if (transitionPhase !== "idle") return;
 
     setNextSection(item.id);
     setTransitionPhase("dissolving");
+    window.location.hash = item.id === "home" ? "" : item.id;
 
     timeoutRef.current = setTimeout(() => {
       setActiveSection(item.id);
@@ -95,7 +115,7 @@ export default function MainMenu() {
               clipPath: buildFor("home") ? "circle(0% at 50% 50%)" : undefined,
             }}
           >
-            <ParticleTechStack />
+            <ParticleTechStack embedded />
           </div>
           {showDissolveOn("home") && <DissolveOverlay />}
         </div>
@@ -118,6 +138,7 @@ export default function MainMenu() {
             }}
           >
             <div className="flex h-full flex-col justify-center">
+              {aboutSlide === 0 ? (
               <div className="notepad-surface w-full max-h-[min(65vh,520px)] shrink-0">
                 <div className="notepad-surface-page flex h-full min-h-0 flex-col p-5 sm:p-6 md:p-7">
                   <div
@@ -144,8 +165,11 @@ export default function MainMenu() {
                   </div>
                 </div>
               </div>
+              ) : (
+                <YouWinSlide key={aboutReplayKey} onReplay={() => setAboutReplayKey((k) => k + 1)} />
+              )}
               <nav
-                className="mt-6 flex shrink-0 justify-center gap-3 pb-2"
+                className="mt-6 flex shrink-0 items-center justify-center gap-3 pb-2"
                 aria-label="About section navigation"
                 style={{
                   animation: buildFor("about") ? "build-item-in 400ms ease-out both" : "none",

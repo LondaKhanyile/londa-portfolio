@@ -356,3 +356,22 @@
     transform: scale(1);
   }
 }
+
+/* Retro TV: CRT flicker and static */
+@keyframes crt-flicker {
+  0%,
+  100% {
+    opacity: 0.02;
+  }
+  50% {
+    opacity: 0.04;
+  }
+}
+@keyframes static-flash {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.95;
+  }
+}

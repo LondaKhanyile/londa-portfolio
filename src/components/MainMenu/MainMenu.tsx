@@ -3,6 +3,7 @@
 import ParticleTechStack from "@/components/ParticleTechStack/ParticleTechStack";
 import DissolveOverlay from "@/components/DissolveOverlay/DissolveOverlay";
 import YouWinSlide from "@/components/YouWinSlide/YouWinSlide";
+import RetroTVPortfolio from "@/components/RetroTV/RetroTVPortfolio";
 import { useState, useRef, useEffect } from "react";
 
 type ActiveSection = "home" | "about" | "projects" | "writing" | "contact";
@@ -92,15 +93,17 @@ export default function MainMenu() {
 
   return (
     <section
-      className="relative z-10 flex min-h-screen flex-col justify-center px-6 pt-12 sm:pl-12 sm:pt-16"
+      className="relative z-10 flex min-h-screen flex-col justify-center px-6 pt-12 sm:pl-12 sm:pr-12 sm:pt-16"
       aria-label="Main menu"
     >
-      {/* Right panel: constellation or About Me (overflow-hidden so dissolving particles don't cause page scroll). Wide rectangle to right margin when About. */}
+      {/* Right panel: constellation, About Me, or Projects (overflow-hidden so dissolving particles don't cause page scroll). Wider when About or Projects (TV). */}
       <div
         className={`absolute overflow-hidden ${
           activeSection === "about"
             ? "left-[44%] right-[10%] top-[10%] bottom-[5%]"
-            : "left-[64%] w-[min(45vw,420px)] top-[53%] h-[min(80vh,600px)] -translate-x-1/2 -translate-y-1/2"
+            : activeSection === "projects"
+              ? "left-[32%] right-[10%] top-[53%] h-[min(80vh,600px)] -translate-y-1/2"
+              : "left-[64%] w-[min(45vw,420px)] top-[53%] h-[min(80vh,600px)] -translate-x-1/2 -translate-y-1/2"
         }`}
         aria-live="polite"
       >
@@ -202,7 +205,7 @@ export default function MainMenu() {
           {showDissolveOn("about") && <DissolveOverlay />}
         </div>
 
-        {/* Projects view (placeholder) */}
+        {/* Projects view: Retro TV */}
         <div
           className="absolute inset-0 flex flex-col"
           style={{
@@ -219,17 +222,8 @@ export default function MainMenu() {
               clipPath: buildFor("projects") ? "circle(0% at 50% 50%)" : undefined,
             }}
           >
-            <p
-              className="mb-4 text-xs font-medium tracking-[0.2em] text-neutral-500 uppercase"
-              style={{
-                animation: buildFor("projects") ? "build-item-in 400ms ease-out both" : "none",
-                animationDelay: buildFor("projects") ? "100ms" : undefined,
-              }}
-            >
-              Projects
-            </p>
-            <div className="relative min-h-0 flex-1 w-full overflow-auto pr-2 text-sm leading-relaxed text-neutral-500">
-              Placeholder. Case studies and links to live work.
+            <div className="relative min-h-0 flex-1 w-full">
+              <RetroTVPortfolio className="h-full min-h-[320px]" />
             </div>
           </div>
           {showDissolveOn("projects") && <DissolveOverlay />}

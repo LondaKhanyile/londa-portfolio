@@ -60,12 +60,16 @@ export default function TvScreenContent({
       {/* Channel content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3">
         <div className="relative h-24 w-full flex-shrink-0 overflow-hidden rounded bg-neutral-800">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={project.image}
-            alt=""
-            className="h-full w-full object-cover"
-          />
+          {project.screenshot ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={project.screenshot}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="h-full w-full bg-neutral-700" />
+          )}
         </div>
         <p className="line-clamp-2 text-center text-xs font-medium text-neutral-300">
           {project.title}

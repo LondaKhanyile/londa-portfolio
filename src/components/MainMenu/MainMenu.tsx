@@ -32,7 +32,7 @@ export default function MainMenu() {
   const [aboutSlide, setAboutSlide] = useState(0);
   const [aboutReplayKey, setAboutReplayKey] = useState(0);
   const [transitionPhase, setTransitionPhase] = useState<"idle" | "dissolving" | "building">("idle");
-  const [nextSection, setNextSection] = useState<ActiveSection | null>(null);
+  const nextSectionRef = useRef<ActiveSection | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -44,7 +44,10 @@ export default function MainMenu() {
   // Sync activeSection from URL hash after mount (avoids hydration mismatch: server has no hash)
   useEffect(() => {
     const section = getSectionFromHash();
-    if (section !== "home") setActiveSection(section);
+    if (section !== "home") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: sync from URL on mount
+      setActiveSection(section);
+    }
   }, []);
 
   useEffect(() => {
@@ -56,18 +59,26 @@ export default function MainMenu() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, [transitionPhase]);
 
+  // Update URL hash when transitioning (side effect, avoids immutability lint)
+  useEffect(() => {
+    if (transitionPhase === "dissolving" && nextSectionRef.current) {
+      const hash = nextSectionRef.current === "home" ? "" : nextSectionRef.current;
+      const url = hash ? `${window.location.pathname}#${hash}` : window.location.pathname;
+      window.history.replaceState(null, "", url);
+    }
+  }, [transitionPhase]);
+
   const handleNavClick = (item: (typeof MENU_ITEMS)[number]) => {
     if (item.id === activeSection && transitionPhase === "idle") return;
     if (transitionPhase !== "idle") return;
 
-    setNextSection(item.id);
+    nextSectionRef.current = item.id;
     setTransitionPhase("dissolving");
-    window.location.hash = item.id === "home" ? "" : item.id;
 
     timeoutRef.current = setTimeout(() => {
       setActiveSection(item.id);
       setTransitionPhase("building");
-      setNextSection(null);
+      nextSectionRef.current = null;
 
       timeoutRef.current = setTimeout(() => {
         setTransitionPhase("idle");
@@ -178,9 +189,10 @@ export default function MainMenu() {
                 <YouWinSlide key={aboutReplayKey} onReplay={() => setAboutReplayKey((k) => k + 1)} />
               )}
               <nav
-                className="mt-6 flex shrink-0 items-center justify-center gap-3 pb-2"
+                className="relative z-10 mt-6 flex shrink-0 items-center justify-center gap-3 pb-2"
                 aria-label="About section navigation"
                 style={{
+                  pointerEvents: "auto",
                   animation: buildFor("about") ? "build-item-in 400ms ease-out both" : "none",
                   animationDelay: buildFor("about") ? "340ms" : undefined,
                 }}

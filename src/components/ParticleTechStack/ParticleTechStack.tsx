@@ -203,7 +203,8 @@ export default function ParticleTechStack({ embedded = false }: ParticleTechStac
 
       {/* Constellation nav dots */}
       <nav
-        className="mt-0 flex items-center justify-center gap-3"
+        className="relative z-10 mt-0 flex shrink-0 items-center justify-center gap-3"
+        style={{ pointerEvents: "auto" }}
         aria-label="Constellation navigation"
       >
         {CONSTELLATIONS.map((c, i) => (

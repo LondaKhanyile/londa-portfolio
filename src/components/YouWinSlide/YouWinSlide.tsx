@@ -9,7 +9,6 @@ const BLOCK_H = 72;
 const BLOCK_GAP = 12;
 const BLOCK_COUNT = BLOCK_COLS * BLOCK_ROWS;
 
-const CANNON_ZONE_H = 144;
 const CANNON_PIVOT_FROM_BOTTOM = 24;
 /* Muzzle center in SVG is at y=7, pivot at y=40 → 33px from pivot */
 const CANNON_BARREL_LENGTH = 33;
@@ -74,6 +73,8 @@ export default function YouWinSlide({ onReplay }: YouWinSlideProps) {
     }
   }, [allBroken]);
 
+  const hasProjectile = projectile !== null;
+
   useEffect(() => {
     const el = containerRef.current;
     const blocksEl = blocksContainerRef.current;
@@ -122,7 +123,9 @@ export default function YouWinSlide({ onReplay }: YouWinSlideProps) {
     };
     rafId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafId);
-  }, [projectile !== null]);
+    // Only run when projectile starts flying; [projectile] would re-run every frame (position updates)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
+  }, [hasProjectile]);
 
   const aimDeg = (aimAngle * 180) / Math.PI;
 

@@ -24,13 +24,19 @@ export default function RetroTVPortfolio({
 }: RetroTVPortfolioProps) {
   const [powerOn, setPowerOn] = useState(false);
   const [channelIndex, setChannelIndex] = useState(0);
+  const [showStatic, setShowStatic] = useState(false);
 
-  const currentChannel = TV_CHANNELS[channelIndex];
+  const STATIC_DURATION_MS = 250;
+
   const channelUp = () => {
+    setShowStatic(true);
     setChannelIndex((i) => (i + 1) % TV_CHANNELS.length);
+    setTimeout(() => setShowStatic(false), STATIC_DURATION_MS);
   };
   const channelDown = () => {
+    setShowStatic(true);
     setChannelIndex((i) => (i - 1 + TV_CHANNELS.length) % TV_CHANNELS.length);
+    setTimeout(() => setShowStatic(false), STATIC_DURATION_MS);
   };
 
   return (
@@ -47,6 +53,7 @@ export default function RetroTVPortfolio({
           <TvScene
             powerOn={powerOn}
             channelIndex={channelIndex}
+            showStatic={showStatic}
             onTuneInComplete={onTuneInComplete}
           />
         </R3FCanvas>
@@ -96,12 +103,6 @@ export default function RetroTVPortfolio({
         <span className="text-[10px] uppercase tracking-wider text-neutral-500">
           Ch −
         </span>
-
-        {powerOn && (
-          <p className="mt-2 max-w-[72px] truncate text-center text-xs text-neutral-500">
-            {currentChannel?.title ?? "—"}
-          </p>
-        )}
       </div>
     </div>
   );

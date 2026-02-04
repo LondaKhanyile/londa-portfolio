@@ -31,6 +31,9 @@ export default function MainMenu() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("home");
   const [aboutSlide, setAboutSlide] = useState(0);
   const [aboutReplayKey, setAboutReplayKey] = useState(0);
+  const [writingSlide, setWritingSlide] = useState(0);
+  const [writingFlippingTo, setWritingFlippingTo] = useState<number | null>(null);
+  const writingFlipInnerRef = useRef<HTMLDivElement | null>(null);
   const [transitionPhase, setTransitionPhase] = useState<"idle" | "dissolving" | "building">("idle");
   const nextSectionRef = useRef<ActiveSection | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -40,6 +43,36 @@ export default function MainMenu() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  // Booklet page flip: trigger flip when flippingTo is set, then reset on transition end
+  useEffect(() => {
+    if (writingFlippingTo === null) return;
+    const el = writingFlipInnerRef.current;
+    if (!el) return;
+    const raf = requestAnimationFrame(() => {
+      el.classList.add("booklet-flip-active");
+    });
+    const onEnd = () => {
+      const targetSlide = writingFlippingTo;
+      setWritingSlide(targetSlide);
+      // Reset transform after React has re-rendered (front face has new content) to avoid glitch
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          el.classList.remove("booklet-flip-active");
+          el.style.transition = "none";
+          el.style.transform = "";
+          void el.offsetHeight;
+          el.style.transition = "";
+          setWritingFlippingTo(null);
+        });
+      });
+    };
+    el.addEventListener("transitionend", onEnd, { once: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener("transitionend", onEnd);
+    };
+  }, [writingFlippingTo]);
 
   // Sync activeSection from URL hash after mount (avoids hydration mismatch: server has no hash)
   useEffect(() => {
@@ -241,7 +274,7 @@ export default function MainMenu() {
           {showDissolveOn("projects") && <DissolveOverlay />}
         </div>
 
-        {/* Writing view (placeholder) */}
+        {/* Writing view: booklet (cover + pages), same dots as About */}
         <div
           className="absolute inset-0 flex flex-col"
           style={{
@@ -258,23 +291,155 @@ export default function MainMenu() {
               clipPath: buildFor("writing") ? "circle(0% at 50% 50%)" : undefined,
             }}
           >
-            <p
-              className="mb-4 text-xs font-medium tracking-[0.2em] text-neutral-500 uppercase"
-              style={{
-                animation: buildFor("writing") ? "build-item-in 400ms ease-out both" : "none",
-                animationDelay: buildFor("writing") ? "100ms" : undefined,
-              }}
-            >
-              Writing
-            </p>
-            <div className="relative min-h-0 flex-1 w-full overflow-auto pr-2 text-sm leading-relaxed text-neutral-500">
-              Placeholder. Essays and notes.
+            <div className="flex h-full flex-col justify-center">
+              <div className="booklet-surface h-[min(65vh,520px)] w-full shrink-0">
+                <div className="booklet-flip h-full w-full">
+                  <div
+                    ref={writingFlipInnerRef}
+                    className="booklet-flip-inner h-full w-full"
+                  >
+                    <div className="booklet-face booklet-face-front">
+                {writingSlide === 0 ? (
+                  <div className="booklet-cover flex h-full flex-col items-center justify-center gap-2 px-8 py-10 text-center">
+                    <h2 className="text-center text-lg font-bold tracking-wide text-neutral-300 sm:text-xl">
+                      My Dev Journal
+                    </h2>
+                    <p className="text-xs tracking-[0.3em] text-neutral-500">
+                      — essays & notes —
+                    </p>
+                    <p className="mt-6 text-[10px] uppercase tracking-widest text-neutral-600">
+                      Read the manual
+                    </p>
+                  </div>
+                ) : writingSlide === 1 ? (
+                  <div className="booklet-page flex h-full flex-col p-5 sm:p-6 md:p-7">
+                    <p className="mb-1 text-[10px] font-medium tracking-widest text-neutral-500">
+                      Page 1
+                    </p>
+                    <h3 className="mb-3 font-semibold text-neutral-300">
+                      Placeholder: On Building Things
+                    </h3>
+                    <div className="space-y-3 text-sm leading-relaxed text-neutral-400">
+                      <p>
+                        This is where a short essay or note could live. Manual-style body text: clear, a bit technical, like the booklets that came with games—how to play, what to expect, a few tips.
+                      </p>
+                      <p>
+                        You can use the dots below to flip to the next page or back to the cover. More articles can be added as separate pages later.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="booklet-page flex h-full flex-col p-5 sm:p-6 md:p-7">
+                    <p className="mb-1 text-[10px] font-medium tracking-widest text-neutral-500">
+                      Page 2
+                    </p>
+                    <h3 className="mb-3 font-semibold text-neutral-300">
+                      Placeholder: Another Topic
+                    </h3>
+                    <div className="space-y-3 text-sm leading-relaxed text-neutral-400">
+                      <p>
+                        Second page of the booklet. Same layout pattern: small page label, title, then body. Keeps the manual feel consistent across entries.
+                      </p>
+                      <p>
+                        When you’re ready, swap this placeholder for real pieces and add more dots if you need more pages.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                    </div>
+                    <div className="booklet-face booklet-face-back">
+                      {writingFlippingTo === 0 ? (
+                        <div className="booklet-cover flex h-full flex-col items-center justify-center gap-2 px-8 py-10 text-center">
+                          <h2 className="text-center text-lg font-bold tracking-wide text-neutral-300 sm:text-xl">
+                            My Dev Journal
+                          </h2>
+                          <p className="text-xs tracking-[0.3em] text-neutral-500">
+                            — essays & notes —
+                          </p>
+                          <p className="mt-6 text-[10px] uppercase tracking-widest text-neutral-600">
+                            Read the manual
+                          </p>
+                        </div>
+                      ) : writingFlippingTo === 1 ? (
+                        <div className="booklet-page flex h-full flex-col p-5 sm:p-6 md:p-7">
+                          <p className="mb-1 text-[10px] font-medium tracking-widest text-neutral-500">
+                            Page 1
+                          </p>
+                          <h3 className="mb-3 font-semibold text-neutral-300">
+                            Placeholder: On Building Things
+                          </h3>
+                          <div className="space-y-3 text-sm leading-relaxed text-neutral-400">
+                            <p>
+                              This is where a short essay or note could live. Manual-style body text: clear, a bit technical, like the booklets that came with games—how to play, what to expect, a few tips.
+                            </p>
+                            <p>
+                              You can use the dots below to flip to the next page or back to the cover. More articles can be added as separate pages later.
+                            </p>
+                          </div>
+                        </div>
+                      ) : writingFlippingTo === 2 ? (
+                        <div className="booklet-page flex h-full flex-col p-5 sm:p-6 md:p-7">
+                          <p className="mb-1 text-[10px] font-medium tracking-widest text-neutral-500">
+                            Page 2
+                          </p>
+                          <h3 className="mb-3 font-semibold text-neutral-300">
+                            Placeholder: Another Topic
+                          </h3>
+                          <div className="space-y-3 text-sm leading-relaxed text-neutral-400">
+                            <p>
+                              Second page of the booklet. Same layout pattern: small page label, title, then body. Keeps the manual feel consistent across entries.
+                            </p>
+                            <p>
+                              {"When you're ready, swap this placeholder for real pieces and add more dots if you need more pages."}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="booklet-cover flex h-full flex-col items-center justify-center gap-2 px-8 py-10 text-center">
+                          <h2 className="text-center text-lg font-bold tracking-wide text-neutral-300 sm:text-xl">
+                            My Dev Journal
+                          </h2>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <nav
+                className="relative z-10 mt-6 flex shrink-0 items-center justify-center gap-3 pb-2"
+                aria-label="Writing section navigation"
+                style={{
+                  pointerEvents: "auto",
+                  animation: buildFor("writing") ? "build-item-in 400ms ease-out both" : "none",
+                  animationDelay: buildFor("writing") ? "340ms" : undefined,
+                }}
+              >
+                {[0, 1, 2].map((i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      if (i !== writingSlide && writingFlippingTo === null) {
+                        setWritingFlippingTo(i);
+                      }
+                    }}
+                    disabled={writingFlippingTo !== null}
+                    className={`h-1.5 w-1.5 cursor-pointer rounded-full transition-all duration-300 hover:scale-125 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950 disabled:cursor-not-allowed disabled:opacity-60 ${
+                      i === writingSlide
+                        ? "scale-125 bg-neutral-400"
+                        : "bg-neutral-600/60 hover:bg-neutral-500/80"
+                    }`}
+                    aria-label={i === 0 ? "Booklet cover" : `Page ${i}`}
+                    aria-current={i === writingSlide ? "true" : undefined}
+                  />
+                ))}
+              </nav>
             </div>
           </div>
           {showDissolveOn("writing") && <DissolveOverlay />}
         </div>
 
-        {/* Contact view (placeholder) */}
+        {/* Contact view */}
         <div
           className="absolute inset-0 flex flex-col"
           style={{
@@ -291,17 +456,68 @@ export default function MainMenu() {
               clipPath: buildFor("contact") ? "circle(0% at 50% 50%)" : undefined,
             }}
           >
-            <p
-              className="mb-4 text-xs font-medium tracking-[0.2em] text-neutral-500 uppercase"
-              style={{
-                animation: buildFor("contact") ? "build-item-in 400ms ease-out both" : "none",
-                animationDelay: buildFor("contact") ? "100ms" : undefined,
-              }}
-            >
-              Contact
-            </p>
-            <div className="relative min-h-0 flex-1 w-full overflow-auto pr-2 text-sm leading-relaxed text-neutral-500">
-              Placeholder. How to reach you.
+            <div className="flex h-full flex-col justify-center">
+              <div
+                className="contact-card mx-auto w-full max-w-md shrink-0 px-6 py-8 sm:px-8 sm:py-10"
+                style={{
+                  animation: buildFor("contact") ? "build-item-in 400ms ease-out both" : "none",
+                  animationDelay: buildFor("contact") ? "100ms" : undefined,
+                }}
+              >
+                <p
+                  className="mb-1 text-[10px] font-medium tracking-[0.25em] text-neutral-500 uppercase"
+                  aria-hidden
+                >
+                  Get in touch
+                </p>
+                <h2 className="mb-8 text-xl font-semibold tracking-tight text-neutral-200 sm:text-2xl">
+                  Let&apos;s work together
+                </h2>
+                <ul className="contact-list space-y-6" role="list">
+                  <li className="contact-list-item">
+                    <span className="contact-label">Email</span>
+                    <a
+                      href="mailto:lskhanyile98@gmail.com"
+                      className="contact-link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      lskhanyile98@gmail.com
+                    </a>
+                  </li>
+                  <li className="contact-list-item">
+                    <span className="contact-label">Phone</span>
+                    <a
+                      href="tel:+27718723121"
+                      className="contact-link"
+                    >
+                      +27 71 872 3121
+                    </a>
+                  </li>
+                  <li className="contact-list-item">
+                    <span className="contact-label">GitHub</span>
+                    <a
+                      href="https://github.com/londakhanyile"
+                      className="contact-link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      github.com/londakhanyile
+                    </a>
+                  </li>
+                  <li className="contact-list-item">
+                    <span className="contact-label">LinkedIn</span>
+                    <a
+                      href="https://www.linkedin.com/in/londakhanyile"
+                      className="contact-link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      linkedin.com/in/londakhanyile
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
           {showDissolveOn("contact") && <DissolveOverlay />}
@@ -337,7 +553,7 @@ export default function MainMenu() {
         })}
       </nav>
 
-      <p className="mt-16 text-xs tracking-widest text-neutral-500 sm:mt-20">
+      <p className="animate-available-glow mt-16 text-xs tracking-widest text-neutral-500 sm:mt-20">
         Available for work
       </p>
     </section>

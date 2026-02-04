@@ -159,10 +159,10 @@ export default function MainMenu() {
           >
             <div className="flex h-full flex-col justify-center">
               {aboutSlide === 0 ? (
-              <div className="notepad-surface w-full max-h-[min(65vh,520px)] shrink-0">
+              <div className="notepad-surface h-[min(65vh,520px)] w-full shrink-0">
                 <div className="notepad-surface-page flex h-full min-h-0 flex-col p-5 sm:p-6 md:p-7">
                   <div
-                    className="notepad-scroll relative min-h-0 flex-1 overflow-auto"
+                    className="notepad-scroll relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain"
                     style={{
                       animation: buildFor("about") ? "build-item-in 400ms ease-out both" : "none",
                       animationDelay: buildFor("about") ? "100ms" : undefined,

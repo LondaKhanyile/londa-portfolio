@@ -27,8 +27,8 @@ function drawStaticNoise(ctx: CanvasRenderingContext2D) {
   ctx.putImageData(imageData, 0, 0);
 }
 
-function drawScanlines(ctx: CanvasRenderingContext2D) {
-  ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+function drawScanlines(ctx: CanvasRenderingContext2D, opacity = 0.28) {
+  ctx.fillStyle = `rgba(0, 0, 0, ${opacity})`;
   for (let y = 0; y < CANVAS_H; y += SCANLINE_HEIGHT + SCANLINE_GAP) {
     ctx.fillRect(0, y, CANVAS_W, SCANLINE_HEIGHT);
   }
@@ -38,13 +38,18 @@ function drawScreenshotToCanvas(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   bandProgress?: number,
-  bandDirection?: BandDirection
+  bandDirection?: BandDirection,
+  offsetY = 0,
+  drawOffsetY = 0
 ) {
   const c = OVERSCAN / 2;
   const sx = img.width * c;
-  const sy = img.height * c;
   const sw = img.width * (1 - OVERSCAN);
   const sh = img.height * (1 - OVERSCAN);
+  // Positive offsetY = shift content down on TV (crop from higher in source; TV texture is Y-flipped)
+  const sy = Math.max(0, img.height * c - img.height * offsetY);
+  // Positive drawOffsetY = draw image lower on canvas = shifts content down on TV
+  const destY = CANVAS_H * drawOffsetY;
 
   const cy = CANVAS_H / 2;
   const hasBand = bandProgress !== undefined && bandDirection !== undefined;
@@ -64,8 +69,8 @@ function drawScreenshotToCanvas(
     ctx.clip();
   }
 
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, CANVAS_W, CANVAS_H);
-  drawScanlines(ctx);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, destY, CANVAS_W, CANVAS_H);
+  drawScanlines(ctx, 0.08);
 
   if (hasBand) ctx.restore();
 }
@@ -113,13 +118,14 @@ function drawChannelToCanvas(
     return;
   }
 
-  // Project channel with screenshot
+  // Project channel with screenshot — raw image only, no effects
   if (screenshotImg && screenshotImg.complete && screenshotImg.naturalWidth) {
-    drawScreenshotToCanvas(ctx, screenshotImg, bandProgress, bandDirection);
+    const offsetY = channel.screenshotOffsetY ?? 0;
+    const drawOffsetY = channel.screenshotDrawOffsetY ?? 0;
+    drawScreenshotToCanvas(ctx, screenshotImg, bandProgress, bandDirection, offsetY, drawOffsetY);
   } else {
     ctx.fillStyle = "#1a1e24";
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-    drawScanlines(ctx);
   }
 }
 
@@ -282,9 +288,9 @@ export default function TvScene({
     /* eslint-disable react-hooks/immutability -- Three.js material API requires imperative mutation */
     if (stayOn) {
       mat.map = canvasTexture;
-      mat.emissiveMap = canvasTexture;
-      mat.emissive.set(1, 1, 1);
-      mat.emissiveIntensity = 1;
+      mat.emissiveMap = null;
+      mat.emissive.set(0, 0, 0);
+      mat.emissiveIntensity = 0;
       mat.color.set(1, 1, 1);
     } else {
       mat.map = null;
@@ -298,6 +304,21 @@ export default function TvScene({
 
   useFrame((_, delta) => {
     const phase = animPhaseRef.current;
+
+    // Animate static when on "Channel closed" for realism (slight movement)
+    if (phase === "idle" && powerOn && !showStatic && !channel?.screenshot && canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.fillStyle = "#0a0e14";
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        drawStaticNoise(ctx);
+        drawScanlines(ctx);
+        // eslint-disable-next-line react-hooks/immutability -- Three.js texture API
+        canvasTexture.needsUpdate = true;
+      }
+      return;
+    }
+
     if (phase === "idle") return;
     if (!canvas || !screenMaterial || !screenOriginal) return;
 

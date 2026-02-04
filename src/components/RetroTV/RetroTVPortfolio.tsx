@@ -39,10 +39,24 @@ export default function RetroTVPortfolio({
     setTimeout(() => setShowStatic(false), STATIC_DURATION_MS);
   };
 
+  const channelNumber = channelIndex + 1;
+  const channelLabel =
+    channelNumber === 3 ? "Coming Soon" : TV_CHANNELS[channelIndex]?.title ?? "—";
+
   return (
     <div
       className={`relative h-full min-h-[320px] w-full overflow-hidden ${className}`}
     >
+      {/* Channel label above the TV — only when TV is on */}
+      {powerOn && (
+        <p
+          className="absolute left-1/2 top-0 z-10 -translate-x-1/2 text-center text-xs font-medium tracking-wider text-neutral-500"
+          aria-live="polite"
+        >
+          Channel {channelNumber}: {channelLabel}
+        </p>
+      )}
+
       <div className="absolute inset-0">
         <R3FCanvas
           camera={{ position: [0, 0, 2.5], fov: 50 }}

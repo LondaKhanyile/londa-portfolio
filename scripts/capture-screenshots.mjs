@@ -4,9 +4,12 @@
  * First time: npx playwright install chromium
  */
 
-const { chromium } = require("playwright");
-const path = require("path");
-const fs = require("fs");
+import { chromium } from "playwright";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const VIEWPORT = { width: 1024, height: 768 };
 const OUTPUT_DIR = path.join(__dirname, "..", "public", "images", "projects");

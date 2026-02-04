@@ -368,7 +368,6 @@ export default function TvScene({
         /* eslint-enable react-hooks/immutability */
       }
     }
-    /* eslint-disable-next-line react-hooks/immutability -- Three.js texture API */
     canvasTexture.needsUpdate = true;
   });
 

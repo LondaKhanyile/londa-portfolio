@@ -19,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={syne.variable}>
-      <body className="min-h-screen bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] font-sans antialiased">
+    <html lang="en" className={`${syne.variable} max-md:h-screen max-md:overflow-hidden`}>
+      <body className="min-h-screen bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] font-sans antialiased max-md:h-screen max-md:overflow-hidden max-md:overscroll-none">
         {children}
       </body>
     </html>

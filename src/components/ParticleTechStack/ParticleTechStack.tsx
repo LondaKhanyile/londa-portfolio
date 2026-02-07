@@ -68,6 +68,11 @@ export default function ParticleTechStack({ embedded = false }: ParticleTechStac
   const [lines, setLines] = useState<{ x1: number; y1: number; x2: number; y2: number }[]>([]);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const swipeStartXRef = useRef<number | null>(null);
+
+  const goToNext = () => goToConstellation((currentConstellation + 1) % CONSTELLATIONS.length);
+  const goToPrev = () =>
+    goToConstellation((currentConstellation - 1 + CONSTELLATIONS.length) % CONSTELLATIONS.length);
 
   const goToConstellation = (index: number) => {
     setCurrentConstellation(index);
@@ -132,7 +137,7 @@ export default function ParticleTechStack({ embedded = false }: ParticleTechStac
     <div
       className={
         embedded
-          ? "absolute inset-0 flex flex-col items-center justify-start pb-12"
+          ? "absolute inset-0 flex flex-col items-center justify-center pb-12"
           : "absolute left-[64%] top-[53%] flex h-[min(80vh,600px)] w-[min(45vw,420px)] -translate-x-1/2 -translate-y-1/2 flex-col items-center"
       }
       aria-label="Tech stack"
@@ -142,10 +147,24 @@ export default function ParticleTechStack({ embedded = false }: ParticleTechStac
         {constellation.name}
       </p>
 
-      {/* Particle area */}
+      {/* Particle area - swipe left/right to cycle constellations */}
       <div
         ref={containerRef}
         className="relative flex-1 w-full min-h-0"
+        onTouchStart={(e) => {
+          swipeStartXRef.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={(e) => {
+          const start = swipeStartXRef.current;
+          swipeStartXRef.current = null;
+          if (start === null) return;
+          const end = e.changedTouches[0].clientX;
+          const diff = start - end;
+          if (Math.abs(diff) > 50) {
+            if (diff > 0) goToNext();
+            else goToPrev();
+          }
+        }}
       >
       {/* Constellation lines */}
       <svg
@@ -203,7 +222,7 @@ export default function ParticleTechStack({ embedded = false }: ParticleTechStac
 
       {/* Constellation nav dots */}
       <nav
-        className="relative z-10 mt-0 flex shrink-0 items-center justify-center gap-3"
+        className="relative z-10 mt-0 flex shrink-0 items-center justify-center gap-5 py-2"
         style={{ pointerEvents: "auto" }}
         aria-label="Constellation navigation"
       >
@@ -212,9 +231,9 @@ export default function ParticleTechStack({ embedded = false }: ParticleTechStac
             key={c.name}
             type="button"
             onClick={() => goToConstellation(i)}
-            className={`h-1.5 w-1.5 cursor-pointer rounded-full transition-all duration-300 hover:scale-125 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950 ${
+            className={`h-2 w-2 cursor-pointer rounded-full transition-all duration-300 hover:scale-125 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950 ${
               i === currentConstellation
-                ? "bg-neutral-400 scale-125"
+                ? "scale-125 bg-neutral-400"
                 : "bg-neutral-600/60 hover:bg-neutral-500/80"
             }`}
             aria-label={`Show ${c.name} constellation`}

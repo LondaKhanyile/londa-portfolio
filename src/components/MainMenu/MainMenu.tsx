@@ -37,12 +37,35 @@ export default function MainMenu() {
   const [writingFlippingTo, setWritingFlippingTo] = useState<number | null>(null);
   const writingFlipInnerRef = useRef<HTMLDivElement | null>(null);
   const [transitionPhase, setTransitionPhase] = useState<"idle" | "dissolving" | "building">("idle");
+  const [trayOpen, setTrayOpen] = useState(false);
   const nextSectionRef = useRef<ActiveSection | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const trayTouchStartXRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  // Swipe from left edge to open tray (mobile only)
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches[0].clientX < 40) touchStartXRef.current = e.touches[0].clientX;
+    };
+    const handleTouchEnd = (e: TouchEvent) => {
+      const start = touchStartXRef.current;
+      touchStartXRef.current = null;
+      if (start === null) return;
+      const end = e.changedTouches[0].clientX;
+      if (end - start > 60) setTrayOpen(true);
+    };
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
   }, []);
 
@@ -142,14 +165,16 @@ export default function MainMenu() {
       className="relative z-10 flex min-h-screen flex-col justify-center px-6 pt-12 sm:pl-12 sm:pr-12 sm:pt-16"
       aria-label="Main menu"
     >
-      {/* Right panel: constellation, About Me, or Projects (overflow-hidden so dissolving particles don't cause page scroll). Wider when About or Projects (TV). */}
+      {/* Right panel: constellation, About Me, or Projects (overflow-hidden so dissolving particles don't cause page scroll). Home: centered on mobile. */}
       <div
         className={`absolute overflow-hidden ${
           activeSection === "about"
             ? "left-[44%] right-[10%] top-[10%] bottom-[5%]"
             : activeSection === "projects"
               ? "left-[32%] right-[10%] top-[53%] h-[min(80vh,600px)] -translate-y-1/2"
-              : "left-[64%] w-[min(45vw,420px)] top-[53%] h-[min(80vh,600px)] -translate-x-1/2 -translate-y-1/2"
+              : activeSection === "home"
+                ? "left-1/2 top-1/2 h-[min(75vh,520px)] w-[min(85vw,360px)] -translate-x-1/2 -translate-y-1/2 md:left-[64%] md:top-[53%] md:h-[min(80vh,600px)] md:w-[min(45vw,420px)]"
+                : "left-[64%] w-[min(45vw,420px)] top-[53%] h-[min(80vh,600px)] -translate-x-1/2 -translate-y-1/2"
         }`}
         aria-live="polite"
       >
@@ -485,8 +510,79 @@ export default function MainMenu() {
         </div>
       </div>
 
+      {/* Mobile: glassmorphic tray on left */}
+      <div
+        className="fixed left-0 top-1/2 z-20 flex -translate-y-1/2 md:hidden"
+        aria-hidden
+      >
+        <div
+          className="mobile-nav-tray flex w-56 flex-col rounded-tr-2xl rounded-br-2xl px-6 py-8 transition-transform duration-300 ease-out"
+          style={{
+            transform: trayOpen ? "translateX(0)" : "translateX(calc(-100% + 24px))",
+          }}
+          onTouchStart={(e) => {
+            if (trayOpen) trayTouchStartXRef.current = e.touches[0].clientX;
+          }}
+          onTouchEnd={(e) => {
+            const start = trayTouchStartXRef.current;
+            trayTouchStartXRef.current = null;
+            if (!trayOpen || start === null) return;
+            const end = e.changedTouches[0].clientX;
+            if (start - end > 60) setTrayOpen(false);
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setTrayOpen((o) => !o)}
+            className="absolute right-0 top-1/2 z-10 flex h-10 w-6 -translate-y-1/2 translate-x-full items-center justify-center rounded-r-md bg-neutral-800/60 text-neutral-400 backdrop-blur-sm hover:bg-neutral-700/60 hover:text-neutral-300"
+            aria-label={trayOpen ? "Close menu" : "Open menu"}
+          >
+            <span
+              className={`text-lg font-bold transition-transform duration-300 ${trayOpen ? "rotate-180" : ""}`}
+            >
+              ›
+            </span>
+          </button>
+          <nav
+            className="flex flex-col gap-6 sm:gap-8"
+            aria-label="Primary navigation"
+          >
+            {MENU_ITEMS.map((item) => {
+              const isActive = item.id === activeSection;
+              const isInactiveGray = !isActive;
+
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => {
+                    handleNavClick(item);
+                    setTrayOpen(false);
+                  }}
+                  className={`group relative w-fit cursor-pointer text-left text-lg font-extrabold tracking-[0.1em] transition-all duration-300 hover:scale-105 hover:text-neutral-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.15)] sm:text-xl ${
+                    isActive
+                      ? "scale-105 text-neutral-100 drop-shadow-[0_0_6px_rgba(255,255,255,0.2)]"
+                      : isInactiveGray
+                        ? "text-neutral-500"
+                        : "text-neutral-300"
+                  }`}
+                  aria-current={isActive ? "true" : undefined}
+                  disabled={transitionPhase !== "idle"}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+          <p className="animate-available-glow mt-12 text-xs tracking-widest text-neutral-500">
+            Available for work
+          </p>
+        </div>
+      </div>
+
+      {/* Desktop: unchanged nav and label */}
       <nav
-        className="flex flex-col gap-6 sm:gap-8"
+        className="hidden flex-col gap-6 sm:gap-8 md:flex"
         aria-label="Primary navigation"
       >
         {MENU_ITEMS.map((item) => {
@@ -498,7 +594,7 @@ export default function MainMenu() {
               key={item.label}
               type="button"
               onClick={() => handleNavClick(item)}
-              className={`group relative w-fit cursor-pointer text-left text-2xl font-extrabold tracking-[0.1em] transition-all duration-300 hover:scale-105 hover:text-neutral-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.15)] sm:text-3xl md:text-4xl ${
+              className={`group relative w-fit cursor-pointer text-left text-lg font-extrabold tracking-[0.1em] transition-all duration-300 hover:scale-105 hover:text-neutral-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.15)] sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl ${
                 isActive
                   ? "scale-105 text-neutral-100 drop-shadow-[0_0_6px_rgba(255,255,255,0.2)]"
                   : isInactiveGray
@@ -514,7 +610,7 @@ export default function MainMenu() {
         })}
       </nav>
 
-      <p className="animate-available-glow mt-16 text-xs tracking-widest text-neutral-500 sm:mt-20">
+      <p className="animate-available-glow hidden pt-16 text-xs tracking-widest text-neutral-500 sm:pt-20 md:block">
         Available for work
       </p>
     </section>

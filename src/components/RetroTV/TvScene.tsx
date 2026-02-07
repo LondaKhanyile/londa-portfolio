@@ -40,12 +40,13 @@ function drawScreenshotToCanvas(
   bandProgress?: number,
   bandDirection?: BandDirection,
   offsetY = 0,
-  drawOffsetY = 0
+  drawOffsetY = 0,
+  overscan = OVERSCAN
 ) {
-  const c = OVERSCAN / 2;
+  const c = overscan / 2;
   const sx = img.width * c;
-  const sw = img.width * (1 - OVERSCAN);
-  const sh = img.height * (1 - OVERSCAN);
+  const sw = img.width * (1 - overscan);
+  const sh = img.height * (1 - overscan);
   // Positive offsetY = shift content down on TV (crop from higher in source; TV texture is Y-flipped)
   const sy = Math.max(0, img.height * c - img.height * offsetY);
   // Positive drawOffsetY = draw image lower on canvas = shifts content down on TV
@@ -122,7 +123,8 @@ function drawChannelToCanvas(
   if (screenshotImg && screenshotImg.complete && screenshotImg.naturalWidth) {
     const offsetY = channel.screenshotOffsetY ?? 0;
     const drawOffsetY = channel.screenshotDrawOffsetY ?? 0;
-    drawScreenshotToCanvas(ctx, screenshotImg, bandProgress, bandDirection, offsetY, drawOffsetY);
+    const overscan = channel.screenshotOverscan ?? OVERSCAN;
+    drawScreenshotToCanvas(ctx, screenshotImg, bandProgress, bandDirection, offsetY, drawOffsetY, overscan);
   } else {
     ctx.fillStyle = "#1a1e24";
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);

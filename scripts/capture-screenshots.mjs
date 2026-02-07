@@ -17,6 +17,7 @@ const OUTPUT_DIR = path.join(__dirname, "..", "public", "images", "projects");
 const CHANNELS = [
   { slug: "tutorflow", url: "https://www.tutorflow.co.za" },
   { slug: "ethixflow", url: "https://gregarious-ganache-64ee20.netlify.app/" },
+  { slug: "firstflight", url: "https://firstflight-seven.vercel.app" },
 ];
 
 async function main() {

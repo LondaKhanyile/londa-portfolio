@@ -4,6 +4,8 @@ import ParticleTechStack from "@/components/ParticleTechStack/ParticleTechStack"
 import DissolveOverlay from "@/components/DissolveOverlay/DissolveOverlay";
 import YouWinSlide from "@/components/YouWinSlide/YouWinSlide";
 import RetroTVPortfolio from "@/components/RetroTV/RetroTVPortfolio";
+import JournalPage from "@/components/JournalPage/JournalPage";
+import { JOURNAL_ENTRIES } from "@/data/journalEntries";
 import { useState, useRef, useEffect } from "react";
 
 type ActiveSection = "home" | "about" | "projects" | "writing" | "contact";
@@ -203,16 +205,16 @@ export default function MainMenu() {
                   >
                     <div className="space-y-4 pr-2 text-sm leading-relaxed text-neutral-400">
                       <p>
-                        I grew up in the early 2000s, when gizmos and gadgets were everywhere and every new thing felt a bit magical. The PS2 era in particular showed me what software could do—how it could pull you into a world that felt real. That sense of wonder stuck. As I got older, I kept wanting to recreate a little of that magic for others.
+                        I grew up in the early 2000s, when gizmos and gadgets were everywhere and every new thing felt a bit magical. The PS2 era in particular showed me what software could doâ€”how it could pull you into a world that felt real. That sense of wonder stuck. As I got older, I kept wanting to recreate a little of that magic for others.
                       </p>
                       <p>
-                        My path into software wasn’t a straight line, but when I finally got here, it felt like home. I get to turn ideas—mine and others’—into reality through code. That means unleashing creativity while solving real problems, which matters more than ever now that so much of life runs on what we build.
+                        My path into software wasnâ€™t a straight line, but when I finally got here, it felt like home. I get to turn ideasâ€”mine and othersâ€™â€”into reality through code. That means unleashing creativity while solving real problems, which matters more than ever now that so much of life runs on what we build.
                       </p>
                       <p>
-                        I take a practical view when building: I don’t build for looks alone. The end product has to serve a clear purpose or achieve something specific. Pretty is nice; useful is what I aim for.
+                        I take a practical view when building: I donâ€™t build for looks alone. The end product has to serve a clear purpose or achieve something specific. Pretty is nice; useful is what I aim for.
                       </p>
                       <p>
-                        I’m kind, I work well in a team, and I don’t give up when things get hard. I’m also adaptive—something that’s essential in the fast-paced world of software. That’s a little about me.
+                        Iâ€™m kind, I work well in a team, and I donâ€™t give up when things get hard. Iâ€™m also adaptiveâ€”something thatâ€™s essential in the fast-paced world of software. Thatâ€™s a little about me.
                       </p>
                     </div>
                   </div>
@@ -312,39 +314,17 @@ export default function MainMenu() {
                     </p>
                   </div>
                 ) : writingSlide === 1 ? (
-                  <div className="booklet-page flex h-full flex-col p-5 sm:p-6 md:p-7">
-                    <p className="mb-1 text-[10px] font-medium tracking-widest text-neutral-500">
-                      Page 1
-                    </p>
-                    <h3 className="mb-3 font-semibold text-neutral-300">
-                      Placeholder: On Building Things
-                    </h3>
-                    <div className="space-y-3 text-sm leading-relaxed text-neutral-400">
-                      <p>
-                        This is where a short essay or note could live. Manual-style body text: clear, a bit technical, like the booklets that came with games—how to play, what to expect, a few tips.
-                      </p>
-                      <p>
-                        You can use the dots below to flip to the next page or back to the cover. More articles can be added as separate pages later.
-                      </p>
-                    </div>
-                  </div>
+                  <JournalPage
+                    entry={JOURNAL_ENTRIES[0]}
+                    pageNumber={1}
+                    buildFor={buildFor("writing")}
+                  />
                 ) : (
-                  <div className="booklet-page flex h-full flex-col p-5 sm:p-6 md:p-7">
-                    <p className="mb-1 text-[10px] font-medium tracking-widest text-neutral-500">
-                      Page 2
-                    </p>
-                    <h3 className="mb-3 font-semibold text-neutral-300">
-                      Placeholder: Another Topic
-                    </h3>
-                    <div className="space-y-3 text-sm leading-relaxed text-neutral-400">
-                      <p>
-                        Second page of the booklet. Same layout pattern: small page label, title, then body. Keeps the manual feel consistent across entries.
-                      </p>
-                      <p>
-                        When you’re ready, swap this placeholder for real pieces and add more dots if you need more pages.
-                      </p>
-                    </div>
-                  </div>
+                  <JournalPage
+                    entry={JOURNAL_ENTRIES[1]}
+                    pageNumber={2}
+                    buildFor={buildFor("writing")}
+                  />
                 )}
                     </div>
                     <div className="booklet-face booklet-face-back">
@@ -361,39 +341,17 @@ export default function MainMenu() {
                           </p>
                         </div>
                       ) : writingFlippingTo === 1 ? (
-                        <div className="booklet-page flex h-full flex-col p-5 sm:p-6 md:p-7">
-                          <p className="mb-1 text-[10px] font-medium tracking-widest text-neutral-500">
-                            Page 1
-                          </p>
-                          <h3 className="mb-3 font-semibold text-neutral-300">
-                            Placeholder: On Building Things
-                          </h3>
-                          <div className="space-y-3 text-sm leading-relaxed text-neutral-400">
-                            <p>
-                              This is where a short essay or note could live. Manual-style body text: clear, a bit technical, like the booklets that came with games—how to play, what to expect, a few tips.
-                            </p>
-                            <p>
-                              You can use the dots below to flip to the next page or back to the cover. More articles can be added as separate pages later.
-                            </p>
-                          </div>
-                        </div>
+                        <JournalPage
+                          entry={JOURNAL_ENTRIES[0]}
+                          pageNumber={1}
+                          buildFor={buildFor("writing")}
+                        />
                       ) : writingFlippingTo === 2 ? (
-                        <div className="booklet-page flex h-full flex-col p-5 sm:p-6 md:p-7">
-                          <p className="mb-1 text-[10px] font-medium tracking-widest text-neutral-500">
-                            Page 2
-                          </p>
-                          <h3 className="mb-3 font-semibold text-neutral-300">
-                            Placeholder: Another Topic
-                          </h3>
-                          <div className="space-y-3 text-sm leading-relaxed text-neutral-400">
-                            <p>
-                              Second page of the booklet. Same layout pattern: small page label, title, then body. Keeps the manual feel consistent across entries.
-                            </p>
-                            <p>
-                              {"When you're ready, swap this placeholder for real pieces and add more dots if you need more pages."}
-                            </p>
-                          </div>
-                        </div>
+                        <JournalPage
+                          entry={JOURNAL_ENTRIES[1]}
+                          pageNumber={2}
+                          buildFor={buildFor("writing")}
+                        />
                       ) : (
                         <div className="booklet-cover flex h-full flex-col items-center justify-center gap-2 px-8 py-10 text-center">
                           <h2 className="text-center text-lg font-bold tracking-wide text-neutral-300 sm:text-xl">
@@ -470,9 +428,12 @@ export default function MainMenu() {
                 >
                   Get in touch
                 </p>
-                <h2 className="mb-8 text-xl font-semibold tracking-tight text-neutral-200 sm:text-2xl">
+                <h2 className="mb-1 text-xl font-semibold tracking-tight text-neutral-200 sm:text-2xl">
                   Let&apos;s work together
                 </h2>
+                <p className="mb-8 text-sm text-neutral-400">
+                  Londa Sihe Khanyile
+                </p>
                 <ul className="contact-list space-y-6" role="list">
                   <li className="contact-list-item">
                     <span className="contact-label">Email</span>

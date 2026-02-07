@@ -40,21 +40,27 @@ export default function RetroTVPortfolio({
   };
 
   const channelNumber = channelIndex + 1;
-  const channelLabel =
-    channelNumber === 3 ? "Coming Soon" : TV_CHANNELS[channelIndex]?.title ?? "—";
+  const channelLabel = TV_CHANNELS[channelIndex]?.title ?? "—";
 
   return (
     <div
       className={`relative h-full min-h-[320px] w-full overflow-hidden ${className}`}
     >
-      {/* Channel label above the TV — only when TV is on */}
+      {/* Instructions and channel label above the TV — only when TV is on */}
       {powerOn && (
-        <p
-          className="absolute left-1/2 top-0 z-10 -translate-x-1/2 text-center text-xs font-medium tracking-wider text-neutral-500"
-          aria-live="polite"
-        >
-          Channel {channelNumber}: {channelLabel}
-        </p>
+        <div className="absolute left-1/2 -top-1 z-10 flex -translate-x-1/2 flex-col items-center gap-1 text-center">
+          {TV_CHANNELS[channelIndex]?.url && (
+            <p className="text-[10px] uppercase tracking-widest text-neutral-400">
+              Click on screen to view project
+            </p>
+          )}
+          <p
+            className="text-xs font-medium tracking-wider text-neutral-500"
+            aria-live="polite"
+          >
+            Channel {channelNumber}: {channelLabel}
+          </p>
+        </div>
       )}
 
       <div className="absolute inset-0">

@@ -7,6 +7,8 @@ export type ChannelProject = {
   screenshotOffsetY?: number;
   /** Extra shift down via draw position (0–1, proportion of canvas height). Use when offsetY is at limit. */
   screenshotDrawOffsetY?: number;
+  /** Crop amount (0–1). Smaller = zoom out (show more of image). Default 0.06. */
+  screenshotOverscan?: number;
 };
 
 export const TV_CHANNELS: ChannelProject[] = [
@@ -21,6 +23,12 @@ export const TV_CHANNELS: ChannelProject[] = [
     title: "EthixFlow",
     url: "https://gregarious-ganache-64ee20.netlify.app/",
     screenshot: "/images/projects/ethixflow.png",
+  },
+  {
+    title: "FirstFlight",
+    url: "https://firstflight-seven.vercel.app",
+    screenshot: "/images/projects/firstflight.png",
+    screenshotOverscan: 0,
   },
   { title: "Channel closed", url: "" },
 ];

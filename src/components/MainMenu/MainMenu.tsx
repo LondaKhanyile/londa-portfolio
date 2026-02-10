@@ -62,7 +62,6 @@ export default function MainMenu() {
   const [transitionPhase, setTransitionPhase] = useState<"idle" | "dissolving" | "building">("idle");
   const nextSectionRef = useRef<ActiveSection | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -200,7 +199,7 @@ export default function MainMenu() {
       <div
         className={`absolute overflow-hidden ${
           activeSection === "about"
-            ? "left-[44%] right-[10%] top-[10%] bottom-[5%]"
+            ? "left-0 right-0 top-0 bottom-0 md:left-[44%] md:right-[10%] md:top-[10%] md:bottom-[5%]"
             : activeSection === "projects"
               ? "left-[32%] right-[10%] top-[53%] h-[min(80vh,600px)] -translate-y-1/2"
               : activeSection === "home"
@@ -271,36 +270,87 @@ export default function MainMenu() {
             }}
           >
             <div className="flex h-full flex-col justify-center">
+              {/* Mobile: left/right buttons above content, aligned right; z-10 so they stay clickable */}
+              <div className="relative z-10 flex shrink-0 justify-end gap-5 px-4 pt-20 md:hidden">
+                <button
+                  type="button"
+                  onClick={() => setAboutSlide(0)}
+                  disabled={aboutSlide === 0}
+                  className="flex h-10 w-10 min-w-[2.5rem] items-center justify-center rounded-full border border-neutral-600 bg-neutral-900/80 text-neutral-400 transition hover:border-neutral-500 hover:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 focus:ring-offset-neutral-950 disabled:cursor-default disabled:opacity-40 disabled:hover:border-neutral-600 disabled:hover:text-neutral-400"
+                  aria-label="Back to essay"
+                >
+                  <span className="text-lg leading-none">←</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAboutSlide(1)}
+                  disabled={aboutSlide === 1}
+                  className="flex h-10 w-10 min-w-[2.5rem] items-center justify-center rounded-full border border-neutral-600 bg-neutral-900/80 text-neutral-400 transition hover:border-neutral-500 hover:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 focus:ring-offset-neutral-950 disabled:cursor-default disabled:opacity-40 disabled:hover:border-neutral-600 disabled:hover:text-neutral-400"
+                  aria-label="Go to game"
+                >
+                  <span className="text-lg leading-none">→</span>
+                </button>
+              </div>
+              {/* Mobile: essay or game */}
               {aboutSlide === 0 ? (
-              <div className="notepad-surface h-[min(65vh,520px)] w-full shrink-0">
-                <div className="notepad-surface-page flex h-full min-h-0 flex-col p-5 sm:p-6 md:p-7">
+                <div
+                  className="notepad-scroll flex min-h-0 flex-1 flex-col justify-center overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 pt-4 pb-20 md:hidden"
+                  style={{
+                    animation: buildFor("about") ? "build-item-in 400ms ease-out both" : "none",
+                    animationDelay: buildFor("about") ? "100ms" : undefined,
+                  }}
+                >
+                  <div className="mx-auto my-auto mt-1 w-full max-w-full space-y-4 pr-2 text-left text-sm leading-relaxed text-neutral-400">
+                    <p>
+                      I grew up in the early 2000s, when gizmos and gadgets were everywhere and every new thing felt a bit magical. The PS2 era in particular showed me what software could do—how it could pull you into a world that felt real. That sense of wonder stuck. As I got older, I kept wanting to recreate a little of that magic for others.
+                    </p>
+                    <p>
+                      My path into software wasn&apos;t a straight line, but when I finally got here, it felt like home. I get to turn ideas—mine and others&apos;—into reality through code. That means unleashing creativity while solving real problems, which matters more than ever now that so much of life runs on what we build.
+                    </p>
+                    <p>
+                      I take a practical view when building: I don&apos;t build for looks alone. The end product has to serve a clear purpose or achieve something specific. Pretty is nice; useful is what I aim for.
+                    </p>
+                    <p>
+                      I&apos;m kind, I work well in a team, and I don&apos;t give up when things get hard. I&apos;m also adaptive—something that&apos;s essential in the fast-paced world of software. That&apos;s a little about me.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex min-h-0 flex-1 items-center justify-center px-4 md:hidden">
+                  <YouWinSlide key={aboutReplayKey} onReplay={() => setAboutReplayKey((k) => k + 1)} />
+                </div>
+              )}
+              {/* Desktop: essay on canvas or game */}
+              <div className="hidden md:flex md:flex-1 md:min-h-0 md:flex-col">
+                {aboutSlide === 0 ? (
                   <div
-                    className="notepad-scroll relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain"
+                    className="notepad-scroll flex min-h-0 flex-1 flex-col justify-center overflow-y-auto overflow-x-hidden overscroll-y-contain px-6 py-6"
                     style={{
                       animation: buildFor("about") ? "build-item-in 400ms ease-out both" : "none",
                       animationDelay: buildFor("about") ? "100ms" : undefined,
                     }}
                   >
-                    <div className="space-y-4 pr-2 text-sm leading-relaxed text-neutral-400">
+                    <div className="mx-auto w-full max-w-xl space-y-4 pr-2 text-left text-sm leading-relaxed text-neutral-400">
                       <p>
-                        I grew up in the early 2000s, when gizmos and gadgets were everywhere and every new thing felt a bit magical. The PS2 era in particular showed me what software could doâ€”how it could pull you into a world that felt real. That sense of wonder stuck. As I got older, I kept wanting to recreate a little of that magic for others.
+                        I grew up in the early 2000s, when gizmos and gadgets were everywhere and every new thing felt a bit magical. The PS2 era in particular showed me what software could do—how it could pull you into a world that felt real. That sense of wonder stuck. As I got older, I kept wanting to recreate a little of that magic for others.
                       </p>
                       <p>
-                        My path into software wasnâ€™t a straight line, but when I finally got here, it felt like home. I get to turn ideasâ€”mine and othersâ€™â€”into reality through code. That means unleashing creativity while solving real problems, which matters more than ever now that so much of life runs on what we build.
+                        My path into software wasn&apos;t a straight line, but when I finally got here, it felt like home. I get to turn ideas—mine and others&apos;—into reality through code. That means unleashing creativity while solving real problems, which matters more than ever now that so much of life runs on what we build.
                       </p>
                       <p>
-                        I take a practical view when building: I donâ€™t build for looks alone. The end product has to serve a clear purpose or achieve something specific. Pretty is nice; useful is what I aim for.
+                        I take a practical view when building: I don&apos;t build for looks alone. The end product has to serve a clear purpose or achieve something specific. Pretty is nice; useful is what I aim for.
                       </p>
                       <p>
-                        Iâ€™m kind, I work well in a team, and I donâ€™t give up when things get hard. Iâ€™m also adaptiveâ€”something thatâ€™s essential in the fast-paced world of software. Thatâ€™s a little about me.
+                        I&apos;m kind, I work well in a team, and I don&apos;t give up when things get hard. I&apos;m also adaptive—something that&apos;s essential in the fast-paced world of software. That&apos;s a little about me.
                       </p>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="relative flex min-h-0 flex-1 items-center justify-center">
+                    <YouWinSlide key={aboutReplayKey} onReplay={() => setAboutReplayKey((k) => k + 1)} />
+                  </div>
+                )}
               </div>
-              ) : (
-                <YouWinSlide key={aboutReplayKey} onReplay={() => setAboutReplayKey((k) => k + 1)} />
-              )}
               <nav
                 className="relative z-10 mt-6 flex shrink-0 items-center justify-center gap-3 pb-2"
                 aria-label="About section navigation"
@@ -598,10 +648,14 @@ export default function MainMenu() {
         </nav>
       </header>
 
-      {/* Mobile: Available for work */}
-      <p className="animate-available-glow fixed bottom-8 left-0 right-0 z-20 bg-neutral-950/80 py-4 text-center text-xs tracking-widest text-neutral-500 backdrop-blur-sm md:hidden">
-        Available for work
-      </p>
+      {/* Mobile: Available for work – hidden on About Me game so cannon has space */}
+      {!(activeSection === "about" && aboutSlide === 1) && (
+        <div className="fixed bottom-0 left-0 right-0 z-20 flex flex-col items-center bg-neutral-950/80 pb-8 backdrop-blur-sm md:hidden">
+          <p className="animate-available-glow w-full py-4 text-center text-xs tracking-widest text-neutral-500">
+            Available for work
+          </p>
+        </div>
+      )}
 
       {/* Desktop: unchanged nav and label */}
       <nav

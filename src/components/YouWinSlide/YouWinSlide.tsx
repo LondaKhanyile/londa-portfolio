@@ -28,6 +28,7 @@ export default function YouWinSlide({ onReplay }: YouWinSlideProps) {
   );
   const [aimAngle, setAimAngle] = useState((-90 * Math.PI) / 180);
   const [projectile, setProjectile] = useState<Projectile | null>(null);
+  const [mobileCannonRect, setMobileCannonRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const blocksContainerRef = useRef<HTMLDivElement>(null);
   const blocksBrokenRef = useRef(blocksBroken);
@@ -35,20 +36,47 @@ export default function YouWinSlide({ onReplay }: YouWinSlideProps) {
 
   const allBroken = blocksBroken.every(Boolean);
 
+  // Position fixed cannon from container rect on mobile so bullet and muzzle align
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      setMobileCannonRect(rect.width > 0 && rect.height > 0 ? rect : null);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const angleFromClient = useCallback((clientX: number, clientY: number): number => {
+    const el = containerRef.current;
+    if (!el) return (-90 * Math.PI) / 180;
+    const rect = el.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    const pivotX = rect.left + w / 2 + CANNON_OFFSET_RIGHT_PX;
+    const pivotY = rect.top + h - CANNON_PIVOT_FROM_BOTTOM;
+    const angle = Math.atan2(clientY - pivotY, clientX - pivotX);
+    return Math.max(AIM_ANGLE_MIN, Math.min(AIM_ANGLE_MAX, angle));
+  }, []);
+
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      const el = containerRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const w = rect.width;
-      const h = rect.height;
-      const pivotX = rect.left + w / 2 + CANNON_OFFSET_RIGHT_PX;
-      const pivotY = rect.top + h - CANNON_PIVOT_FROM_BOTTOM;
-      const angle = Math.atan2(e.clientY - pivotY, e.clientX - pivotX);
-      const clamped = Math.max(AIM_ANGLE_MIN, Math.min(AIM_ANGLE_MAX, angle));
-      setAimAngle(clamped);
+      setAimAngle(angleFromClient(e.clientX, e.clientY));
     },
-    []
+    [angleFromClient]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (e.touches.length === 0) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      setAimAngle(angleFromClient(t.clientX, t.clientY));
+    },
+    [angleFromClient]
   );
 
   const handleFire = useCallback(() => {
@@ -56,16 +84,39 @@ export default function YouWinSlide({ onReplay }: YouWinSlideProps) {
     const el = containerRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const w = rect.width;
-    const h = rect.height;
-    const pivotY = h - CANNON_PIVOT_FROM_BOTTOM;
-    const pivotX = w / 2 + CANNON_OFFSET_RIGHT_PX;
-    const mouthX = pivotX + CANNON_BARREL_LENGTH * Math.cos(aimAngle);
-    const mouthY = pivotY + CANNON_BARREL_LENGTH * Math.sin(aimAngle);
     const vx = PROJECTILE_SPEED * Math.cos(aimAngle);
     const vy = PROJECTILE_SPEED * Math.sin(aimAngle);
+
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    let mouthX: number;
+    let mouthY: number;
+
+    if (isMobile) {
+      // Use container-relative coords so bullet matches fixed cannon (which is positioned from container rect)
+      const pivotX = rect.width / 2 + CANNON_OFFSET_RIGHT_PX;
+      const pivotY = rect.height - 96; // bottom-24 = 6rem
+      mouthX = pivotX + CANNON_BARREL_LENGTH * Math.cos(aimAngle);
+      mouthY = pivotY + CANNON_BARREL_LENGTH * Math.sin(aimAngle);
+    } else {
+      const w = rect.width;
+      const h = rect.height;
+      const pivotY = h - CANNON_PIVOT_FROM_BOTTOM;
+      const pivotX = w / 2 + CANNON_OFFSET_RIGHT_PX;
+      mouthX = pivotX + CANNON_BARREL_LENGTH * Math.cos(aimAngle);
+      mouthY = pivotY + CANNON_BARREL_LENGTH * Math.sin(aimAngle);
+    }
+
     setProjectile({ x: mouthX, y: mouthY, vx, vy });
   }, [revealed, projectile, aimAngle]);
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (e.changedTouches.length === 0) return;
+      e.preventDefault();
+      handleFire();
+    },
+    [handleFire]
+  );
 
   useEffect(() => {
     if (allBroken) {
@@ -198,15 +249,21 @@ export default function YouWinSlide({ onReplay }: YouWinSlideProps) {
         ))}
       </div>
 
-      {/* Cannon zone – click to shoot; deactivated after winning so replay is clickable */}
+      {/* Cannon zone – click/tap to shoot; touch: drag to aim, release to fire. Extra bottom padding on mobile so hit area sits above "Available for work" bar. */}
       <div
-        className={`absolute bottom-0 left-0 right-0 top-[11rem] z-10 flex items-end justify-center pb-4 ${
+        className={`absolute bottom-0 left-0 right-0 top-[11rem] z-10 flex touch-none items-end justify-center pb-36 md:pb-4 ${
           revealed ? "pointer-events-none cursor-default" : "cursor-crosshair"
         }`}
         onClick={revealed ? undefined : handleFire}
+        onTouchStart={(e) => {
+          if (revealed || projectile) return;
+          e.preventDefault();
+        }}
+        onTouchMove={revealed ? undefined : handleTouchMove}
+        onTouchEnd={revealed ? undefined : handleTouchEnd}
         role={revealed ? undefined : "button"}
         tabIndex={revealed ? -1 : 0}
-        aria-label={revealed ? undefined : "Aim and click to fire"}
+        aria-label={revealed ? undefined : "Aim and click or release finger to fire"}
         onKeyDown={
           revealed
             ? undefined
@@ -218,8 +275,9 @@ export default function YouWinSlide({ onReplay }: YouWinSlideProps) {
               }
         }
       >
+        {/* Cannon graphic – absolute in flow on desktop */}
         <div
-          className="you-win-cannon absolute bottom-6 left-1/2 w-12 transition-transform duration-75"
+          className="you-win-cannon absolute bottom-6 left-1/2 hidden w-12 transition-transform duration-75 md:block"
           style={{
             transform: `translateX(calc(-50% + ${CANNON_OFFSET_RIGHT_PX}px)) rotate(${aimDeg + 90}deg)`,
             transformOrigin: "50% 100%",
@@ -235,17 +293,53 @@ export default function YouWinSlide({ onReplay }: YouWinSlideProps) {
             strokeLinecap="square"
             aria-hidden
           >
-            {/* Base / carriage */}
             <path d="M8 36h32v4H8z" fill="currentColor" className="text-neutral-700" />
             <path d="M12 32h8v4h-8zM28 32h8v4h-8z" fill="currentColor" className="text-neutral-600" />
-            {/* Barrel */}
             <rect x="20" y="8" width="8" height="28" rx="1" fill="currentColor" className="text-neutral-500" />
             <rect x="21" y="9" width="6" height="26" fill="currentColor" className="text-neutral-400 opacity-60" />
-            {/* Muzzle */}
             <rect x="19" y="4" width="10" height="6" fill="currentColor" className="text-neutral-400" />
           </svg>
         </div>
       </div>
+
+      {/* Mobile: fixed cannon above "Available for work" bar (z-30) so it’s visible; touch handled by zone above */}
+      {!revealed && (
+        <div
+          className="pointer-events-none fixed z-30 w-12 md:hidden"
+          style={
+            mobileCannonRect
+              ? {
+                  left: mobileCannonRect.left + mobileCannonRect.width / 2 - 24 + CANNON_OFFSET_RIGHT_PX,
+                  top: mobileCannonRect.bottom - 96 - 40,
+                  transform: `rotate(${aimDeg + 90}deg)`,
+                  transformOrigin: "50% 100%",
+                }
+              : {
+                  left: "50%",
+                  bottom: 96,
+                  transform: `translateX(-50%) translateX(${CANNON_OFFSET_RIGHT_PX}px) rotate(${aimDeg + 90}deg)`,
+                  transformOrigin: "50% 100%",
+                }
+          }
+          aria-hidden
+        >
+          <svg
+            viewBox="0 0 48 40"
+            className="h-auto w-full text-neutral-500"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="square"
+            aria-hidden
+          >
+            <path d="M8 36h32v4H8z" fill="currentColor" className="text-neutral-700" />
+            <path d="M12 32h8v4h-8zM28 32h8v4h-8z" fill="currentColor" className="text-neutral-600" />
+            <rect x="20" y="8" width="8" height="28" rx="1" fill="currentColor" className="text-neutral-500" />
+            <rect x="21" y="9" width="6" height="26" fill="currentColor" className="text-neutral-400 opacity-60" />
+            <rect x="19" y="4" width="10" height="6" fill="currentColor" className="text-neutral-400" />
+          </svg>
+        </div>
+      )}
 
       {/* Projectile – rotated to face direction of motion (tail behind) */}
       {projectile && (

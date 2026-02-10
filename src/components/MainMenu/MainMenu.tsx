@@ -7,6 +7,28 @@ import RetroTVPortfolio from "@/components/RetroTV/RetroTVPortfolio";
 import JournalPage from "@/components/JournalPage/JournalPage";
 import { JOURNAL_ENTRIES } from "@/data/journalEntries";
 import { useState, useRef, useEffect } from "react";
+import {
+  SiTypescript,
+  SiNextdotjs,
+  SiReact,
+  SiTailwindcss,
+  SiNodedotjs,
+  SiSupabase,
+  SiPostgresql,
+  SiGit,
+} from "react-icons/si";
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const set = () => setIsDesktop(mq.matches);
+    set();
+    mq.addEventListener("change", set);
+    return () => mq.removeEventListener("change", set);
+  }, []);
+  return isDesktop;
+}
 
 type ActiveSection = "home" | "about" | "projects" | "writing" | "contact";
 
@@ -30,6 +52,7 @@ const DISSOLVE_MS = 2200;
 const BUILD_MS = 1000;
 
 export default function MainMenu() {
+  const isDesktop = useIsDesktop();
   const [activeSection, setActiveSection] = useState<ActiveSection>("home");
   const [aboutSlide, setAboutSlide] = useState(0);
   const [aboutReplayKey, setAboutReplayKey] = useState(0);
@@ -37,35 +60,12 @@ export default function MainMenu() {
   const [writingFlippingTo, setWritingFlippingTo] = useState<number | null>(null);
   const writingFlipInnerRef = useRef<HTMLDivElement | null>(null);
   const [transitionPhase, setTransitionPhase] = useState<"idle" | "dissolving" | "building">("idle");
-  const [trayOpen, setTrayOpen] = useState(false);
   const nextSectionRef = useRef<ActiveSection | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const touchStartXRef = useRef<number | null>(null);
-  const trayTouchStartXRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
-  // Swipe from left edge to open tray (mobile only)
-  useEffect(() => {
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches[0].clientX < 40) touchStartXRef.current = e.touches[0].clientX;
-    };
-    const handleTouchEnd = (e: TouchEvent) => {
-      const start = touchStartXRef.current;
-      touchStartXRef.current = null;
-      if (start === null) return;
-      const end = e.changedTouches[0].clientX;
-      if (end - start > 60) setTrayOpen(true);
-    };
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchend", handleTouchEnd, { passive: true });
-    return () => {
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchend", handleTouchEnd);
     };
   }, []);
 
@@ -165,6 +165,35 @@ export default function MainMenu() {
       className="relative z-10 flex min-h-screen flex-col justify-center px-6 pt-12 sm:pl-12 sm:pr-12 sm:pt-16"
       aria-label="Main menu"
     >
+      {/* Tech stack block: outside transformed panel so fixed = viewport, mobile only, just under nav */}
+      <div
+        className="fixed left-4 right-4 top-[32vh] z-10 max-w-[400px] md:hidden"
+        style={{
+          opacity: showHome && !showDissolveOn("home") ? 1 : 0,
+          transition: "opacity 400ms ease-out",
+          pointerEvents: "none",
+        }}
+      >
+        <h2 className="text-lg font-semibold tracking-wide text-neutral-200">Tech stack</h2>
+        <p className="mt-3 text-sm leading-relaxed text-neutral-400">
+          I build with TypeScript, React, and Next.js for type-safe, fast UIs and APIs. Tailwind keeps styling consistent and quick to iterate. On the backend I use Node.js with Supabase and PostgreSQL for auth and data, and I lean on Git and modern tooling so the stack stays reliable and easy to ship.
+        </p>
+        <div className="mt-6 flex flex-col gap-3" aria-label="Tech stack tools">
+          <div className="flex flex-wrap items-center gap-4">
+            <SiTypescript className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiNextdotjs className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiReact className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiTailwindcss className="h-6 w-6 text-neutral-400" aria-hidden />
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <SiNodedotjs className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiSupabase className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiPostgresql className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiGit className="h-6 w-6 text-neutral-400" aria-hidden />
+          </div>
+        </div>
+      </div>
+
       {/* Right panel: constellation, About Me, or Projects (overflow-hidden so dissolving particles don't cause page scroll). Home: centered on mobile. */}
       <div
         className={`absolute overflow-hidden ${
@@ -173,24 +202,25 @@ export default function MainMenu() {
             : activeSection === "projects"
               ? "left-[32%] right-[10%] top-[53%] h-[min(80vh,600px)] -translate-y-1/2"
               : activeSection === "home"
-                ? "left-1/2 top-1/2 h-[min(75vh,520px)] w-[min(85vw,360px)] -translate-x-1/2 -translate-y-1/2 md:left-[64%] md:top-[53%] md:h-[min(80vh,600px)] md:w-[min(45vw,420px)]"
+                ? "left-1/2 top-[calc(50%+1.25rem)] h-[min(78vh,520px)] w-[min(92vw,400px)] -translate-x-1/2 -translate-y-1/2 md:left-[64%] md:top-[53%] md:h-[min(80vh,600px)] md:w-[min(45vw,420px)] md:-translate-x-1/2 md:-translate-y-1/2"
                 : "left-[64%] w-[min(45vw,420px)] top-[53%] h-[min(80vh,600px)] -translate-x-1/2 -translate-y-1/2"
         }`}
         aria-live="polite"
       >
-        {/* Constellation view (4 dots) */}
+        {/* Constellation view: desktop = full interactive (dots, hover). Mobile = background only. When home, z-20 so dots sit above other section layers. */}
         <div
-          className="absolute inset-0 flex flex-col items-center"
+          className={`absolute inset-0 flex flex-col items-center ${showHome ? "z-20" : "z-0"}`}
           style={{
             opacity: showHome ? 1 : 0,
             transition: showHome ? "opacity 400ms ease-out" : "none",
-            pointerEvents: activeSection === "home" && transitionPhase === "idle" ? "auto" : "none",
+            pointerEvents:
+              activeSection === "home" && transitionPhase === "idle" && isDesktop ? "auto" : "none",
           }}
         >
           <div
-            className="flex h-full w-full flex-col items-center transition-opacity duration-[2200ms] ease-out"
+            className="flex h-full w-full flex-col items-center opacity-50 transition-opacity duration-[2200ms] ease-out md:opacity-100"
             style={{
-              opacity: showDissolveOn("home") ? 0 : 1,
+              opacity: showDissolveOn("home") ? 0 : undefined,
               animation: buildFor("home") ? `build-reveal ${BUILD_MS}ms ease-out forwards` : "none",
               clipPath: buildFor("home") ? "circle(0% at 50% 50%)" : undefined,
             }}
@@ -198,6 +228,27 @@ export default function MainMenu() {
             <ParticleTechStack embedded />
           </div>
           {showDissolveOn("home") && <DissolveOverlay />}
+        </div>
+
+        {/* Home foreground: mobile only — content on top of constellation. Desktop has no overlay. */}
+        <div
+          className="absolute inset-0 z-10 flex flex-col items-center justify-start px-4 md:hidden"
+          style={{
+            opacity: showHome ? 1 : 0,
+            transition: showHome ? "opacity 400ms ease-out" : "none",
+            pointerEvents: activeSection === "home" && transitionPhase === "idle" ? "auto" : "none",
+          }}
+        >
+          <div
+            className="flex w-full flex-col items-start transition-opacity duration-[2200ms] ease-out"
+            style={{
+              opacity: showDissolveOn("home") ? 0 : 1,
+              animation: buildFor("home") ? `build-reveal ${BUILD_MS}ms ease-out forwards` : "none",
+              clipPath: buildFor("home") ? "circle(0% at 50% 50%)" : undefined,
+            }}
+          >
+            {/* Add your headline, tagline, or other content here */}
+          </div>
         </div>
 
         {/* About Me view (2 dots) */}
@@ -510,75 +561,45 @@ export default function MainMenu() {
         </div>
       </div>
 
-      {/* Mobile: glassmorphic tray on left */}
-      <div
-        className="fixed left-0 top-1/2 z-20 flex -translate-y-1/2 md:hidden"
-        aria-hidden
+      {/* Mobile: top navbar */}
+      <header
+        className="fixed left-0 right-0 top-0 z-20 md:hidden"
+        aria-label="Mobile navigation"
       >
-        <div
-          className="mobile-nav-tray flex w-56 flex-col rounded-tr-2xl rounded-br-2xl px-6 py-8 transition-transform duration-300 ease-out"
-          style={{
-            transform: trayOpen ? "translateX(0)" : "translateX(calc(-100% + 24px))",
-          }}
-          onTouchStart={(e) => {
-            if (trayOpen) trayTouchStartXRef.current = e.touches[0].clientX;
-          }}
-          onTouchEnd={(e) => {
-            const start = trayTouchStartXRef.current;
-            trayTouchStartXRef.current = null;
-            if (!trayOpen || start === null) return;
-            const end = e.changedTouches[0].clientX;
-            if (start - end > 60) setTrayOpen(false);
-          }}
+        <nav
+          className="mobile-nav-bar flex items-center justify-center gap-x-5 px-4 py-3.5"
+          aria-label="Primary navigation"
         >
-          <button
-            type="button"
-            onClick={() => setTrayOpen((o) => !o)}
-            className="absolute right-0 top-1/2 z-10 flex h-10 w-6 -translate-y-1/2 translate-x-full items-center justify-center rounded-r-md bg-neutral-800/60 text-neutral-400 backdrop-blur-sm hover:bg-neutral-700/60 hover:text-neutral-300"
-            aria-label={trayOpen ? "Close menu" : "Open menu"}
-          >
-            <span
-              className={`text-lg font-bold transition-transform duration-300 ${trayOpen ? "rotate-180" : ""}`}
-            >
-              ›
-            </span>
-          </button>
-          <nav
-            className="flex flex-col gap-6 sm:gap-8"
-            aria-label="Primary navigation"
-          >
-            {MENU_ITEMS.map((item) => {
-              const isActive = item.id === activeSection;
-              const isInactiveGray = !isActive;
+          {MENU_ITEMS.map((item) => {
+            const isActive = item.id === activeSection;
+            const isInactiveGray = !isActive;
 
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => {
-                    handleNavClick(item);
-                    setTrayOpen(false);
-                  }}
-                  className={`group relative w-fit cursor-pointer text-left text-lg font-extrabold tracking-[0.1em] transition-all duration-300 hover:scale-105 hover:text-neutral-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.15)] sm:text-xl ${
-                    isActive
-                      ? "scale-105 text-neutral-100 drop-shadow-[0_0_6px_rgba(255,255,255,0.2)]"
-                      : isInactiveGray
-                        ? "text-neutral-500"
-                        : "text-neutral-300"
-                  }`}
-                  aria-current={isActive ? "true" : undefined}
-                  disabled={transitionPhase !== "idle"}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-          <p className="animate-available-glow mt-12 text-xs tracking-widest text-neutral-500">
-            Available for work
-          </p>
-        </div>
-      </div>
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => handleNavClick(item)}
+                className={`cursor-pointer text-sm font-semibold tracking-wide transition-all duration-200 hover:text-neutral-100 ${
+                  isActive
+                    ? "text-neutral-100"
+                    : isInactiveGray
+                      ? "text-neutral-500"
+                      : "text-neutral-400"
+                }`}
+                aria-current={isActive ? "true" : undefined}
+                disabled={transitionPhase !== "idle"}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+      </header>
+
+      {/* Mobile: Available for work */}
+      <p className="animate-available-glow fixed bottom-8 left-0 right-0 z-20 bg-neutral-950/80 py-4 text-center text-xs tracking-widest text-neutral-500 backdrop-blur-sm md:hidden">
+        Available for work
+      </p>
 
       {/* Desktop: unchanged nav and label */}
       <nav

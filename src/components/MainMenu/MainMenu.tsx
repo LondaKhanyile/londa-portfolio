@@ -58,6 +58,7 @@ export default function MainMenu() {
   const [aboutReplayKey, setAboutReplayKey] = useState(0);
   const [writingSlide, setWritingSlide] = useState(0);
   const [writingFlippingTo, setWritingFlippingTo] = useState<number | null>(null);
+  const [expandedJournalId, setExpandedJournalId] = useState<string | null>(null);
   const writingFlipInnerRef = useRef<HTMLDivElement | null>(null);
   const [transitionPhase, setTransitionPhase] = useState<"idle" | "dissolving" | "building">("idle");
   const nextSectionRef = useRef<ActiveSection | null>(null);
@@ -204,7 +205,11 @@ export default function MainMenu() {
               ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[32%] md:right-[10%] md:top-[53%] md:bottom-auto md:h-[min(80vh,600px)] md:-translate-y-1/2 md:bg-transparent md:bg-none"
               : activeSection === "home"
                 ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[64%] md:top-[53%] md:bottom-auto md:h-[min(80vh,600px)] md:w-[min(45vw,420px)] md:-translate-x-1/2 md:-translate-y-1/2 md:bg-transparent md:bg-none"
-                : "left-[64%] w-[min(45vw,420px)] top-[53%] h-[min(80vh,600px)] -translate-x-1/2 -translate-y-1/2"
+                : activeSection === "writing"
+                  ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[64%] md:top-[53%] md:bottom-auto md:h-[min(80vh,600px)] md:w-[min(45vw,420px)] md:-translate-x-1/2 md:-translate-y-1/2 md:bg-transparent md:bg-none"
+                  : activeSection === "contact"
+                    ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[64%] md:top-[53%] md:bottom-auto md:h-[min(80vh,600px)] md:w-[min(45vw,420px)] md:-translate-x-1/2 md:-translate-y-1/2 md:bg-transparent md:bg-none"
+                    : "left-[64%] w-[min(45vw,420px)] top-[53%] h-[min(80vh,600px)] -translate-x-1/2 -translate-y-1/2"
         }`}
         aria-live="polite"
       >
@@ -406,7 +411,7 @@ export default function MainMenu() {
           {showDissolveOn("projects") && <DissolveOverlay />}
         </div>
 
-        {/* Writing view: booklet (cover + pages), same dots as About */}
+        {/* Writing view: mobile = canvas + title + journal cards; desktop = booklet (cover + pages) */}
         <div
           className="absolute inset-0 flex flex-col"
           style={{
@@ -423,7 +428,62 @@ export default function MainMenu() {
               clipPath: buildFor("writing") ? "circle(0% at 50% 50%)" : undefined,
             }}
           >
-            <div className="flex h-full flex-col justify-center">
+            {/* Mobile: title + journal cards on canvas; tap card to expand/collapse full journal, tap outside to close */}
+            <div
+              className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-20 pb-24 md:hidden"
+              style={{
+                animation: buildFor("writing") ? "build-item-in 400ms ease-out both" : "none",
+                animationDelay: buildFor("writing") ? "100ms" : undefined,
+              }}
+              onClick={() => setExpandedJournalId(null)}
+              role="presentation"
+            >
+              <h2 className="text-lg font-semibold tracking-wide text-neutral-200">
+                My Dev Journal
+              </h2>
+              <div className="mt-6 flex flex-col gap-4">
+                {JOURNAL_ENTRIES.map((entry) => {
+                  const isExpanded = expandedJournalId === entry.id;
+                  return (
+                    <article
+                      key={entry.id}
+                      className="cursor-pointer rounded-lg border border-neutral-700/80 bg-neutral-900/50 px-4 py-3 backdrop-blur-sm transition-shadow hover:border-neutral-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedJournalId(isExpanded ? null : entry.id);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setExpandedJournalId(isExpanded ? null : entry.id);
+                        }
+                      }}
+                      aria-expanded={isExpanded}
+                      aria-label={isExpanded ? `Collapse ${entry.title}` : `Expand ${entry.title}`}
+                    >
+                      <h3 className="text-sm font-semibold leading-snug text-neutral-200">
+                        {entry.title}
+                      </h3>
+                      <p className="mt-1.5 text-xs leading-relaxed text-neutral-400">
+                        {entry.blurb}
+                      </p>
+                      {isExpanded && (
+                        <div className="mt-4 space-y-3 border-t border-neutral-700/80 pt-4 text-xs leading-relaxed text-neutral-400">
+                          {entry.body.map((paragraph, i) => (
+                            <p key={i}>{paragraph}</p>
+                          ))}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Desktop: booklet */}
+            <div className="hidden h-full flex-col justify-center md:flex">
               <div className="booklet-surface h-[min(65vh,520px)] w-full shrink-0">
                 <div className="booklet-flip h-full w-full">
                   <div
@@ -494,7 +554,7 @@ export default function MainMenu() {
                 </div>
               </div>
               <nav
-                className="relative z-10 mt-6 flex shrink-0 items-center justify-center gap-3 pb-2"
+                className="relative z-10 mt-6 flex shrink-0 items-center justify-center gap-3 pb-2 md:flex hidden"
                 aria-label="Writing section navigation"
                 style={{
                   pointerEvents: "auto",

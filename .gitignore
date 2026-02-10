@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# local backup of unoptimized model (optional)
+public/models/tv-backup.glb
+
 # debug
 npm-debug.log*
 yarn-debug.log*

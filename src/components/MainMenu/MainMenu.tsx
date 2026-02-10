@@ -174,11 +174,13 @@ export default function MainMenu() {
           pointerEvents: "none",
         }}
       >
-        <h2 className="text-lg font-semibold tracking-wide text-neutral-200">Tech stack</h2>
-        <p className="mt-3 text-sm leading-relaxed text-neutral-400">
-          I build with TypeScript, React, and Next.js for type-safe, fast UIs and APIs. Tailwind keeps styling consistent and quick to iterate. On the backend I use Node.js with Supabase and PostgreSQL for auth and data, and I lean on Git and modern tooling so the stack stays reliable and easy to ship.
-        </p>
-        <div className="mt-6 flex flex-col gap-3" aria-label="Tech stack tools">
+        <div className="-mt-4">
+          <h2 className="text-lg font-semibold tracking-wide text-neutral-200">Tech stack</h2>
+          <p className="mt-3 text-sm leading-relaxed text-neutral-400">
+            I build with TypeScript, React, and Next.js for type-safe, fast UIs and APIs. Tailwind keeps styling consistent and quick to iterate. On the backend I use Node.js with Supabase and PostgreSQL for auth and data, and I lean on Git and modern tooling so the stack stays reliable and easy to ship.
+          </p>
+        </div>
+        <div className="mt-10 flex flex-col gap-3" aria-label="Tech stack tools">
           <div className="flex flex-wrap items-center gap-4">
             <SiTypescript className="h-6 w-6 text-neutral-400" aria-hidden />
             <SiNextdotjs className="h-6 w-6 text-neutral-400" aria-hidden />

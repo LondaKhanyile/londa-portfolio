@@ -195,15 +195,15 @@ export default function MainMenu() {
         </div>
       </div>
 
-      {/* Right panel: constellation, About Me, or Projects (overflow-hidden so dissolving particles don't cause page scroll). Home: centered on mobile. */}
+      {/* Right panel: constellation, About Me, or Projects. Mobile: same bg as body so no black band above "Available for work". */}
       <div
         className={`absolute overflow-hidden ${
           activeSection === "about"
-            ? "left-0 right-0 top-0 bottom-0 md:left-[44%] md:right-[10%] md:top-[10%] md:bottom-[5%]"
+            ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[44%] md:right-[10%] md:top-[10%] md:bottom-[5%] md:bg-transparent md:bg-none"
             : activeSection === "projects"
-              ? "left-[32%] right-[10%] top-[53%] h-[min(80vh,600px)] -translate-y-1/2"
+              ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[32%] md:right-[10%] md:top-[53%] md:bottom-auto md:h-[min(80vh,600px)] md:-translate-y-1/2 md:bg-transparent md:bg-none"
               : activeSection === "home"
-                ? "left-1/2 top-[calc(50%+1.25rem)] h-[min(78vh,520px)] w-[min(92vw,400px)] -translate-x-1/2 -translate-y-1/2 md:left-[64%] md:top-[53%] md:h-[min(80vh,600px)] md:w-[min(45vw,420px)] md:-translate-x-1/2 md:-translate-y-1/2"
+                ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[64%] md:top-[53%] md:bottom-auto md:h-[min(80vh,600px)] md:w-[min(45vw,420px)] md:-translate-x-1/2 md:-translate-y-1/2 md:bg-transparent md:bg-none"
                 : "left-[64%] w-[min(45vw,420px)] top-[53%] h-[min(80vh,600px)] -translate-x-1/2 -translate-y-1/2"
         }`}
         aria-live="polite"
@@ -397,8 +397,10 @@ export default function MainMenu() {
               clipPath: buildFor("projects") ? "circle(0% at 50% 50%)" : undefined,
             }}
           >
-            <div className="relative min-h-0 flex-1 w-full">
-              <RetroTVPortfolio className="h-full min-h-[320px]" />
+            <div className="relative flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center md:block">
+              <div className="h-[65vh] w-[95vw] min-h-0 min-w-0 shrink-0 md:h-full md:w-full md:max-h-none md:max-w-none">
+                <RetroTVPortfolio className="h-full min-h-[200px] md:min-h-[320px]" />
+              </div>
             </div>
           </div>
           {showDissolveOn("projects") && <DissolveOverlay />}

@@ -44,11 +44,82 @@ export default function RetroTVPortfolio({
 
   return (
     <div
-      className={`relative h-full min-h-[320px] w-full overflow-hidden ${className}`}
+      className={`relative flex h-full min-h-[320px] w-full flex-col overflow-hidden ${className}`}
     >
-      {/* Instructions and channel label above the TV — only when TV is on */}
+      {/* Mobile: instruction + channel beneath navbar, then remote in a row; label area always reserves space so TV doesn't move when power on */}
+      <div className="flex shrink-0 flex-col justify-start gap-3 px-2 pt-10 pb-1 mb-4 md:hidden">
+        <div className="flex min-h-[2.75rem] flex-col items-center justify-center gap-0.5 text-center">
+          {powerOn && (
+            <>
+              {TV_CHANNELS[channelIndex]?.url && (
+                <p className="text-[10px] uppercase tracking-widest text-neutral-400">
+                  Click on screen to view project
+                </p>
+              )}
+              <p
+                className="text-xs font-medium tracking-wider text-neutral-500"
+                aria-live="polite"
+              >
+                Channel {channelNumber}: {channelLabel}
+              </p>
+            </>
+          )}
+        </div>
+        <div className="flex flex-row items-center justify-center gap-3">
+          <div className="flex flex-col items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => setPowerOn((p) => !p)}
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-neutral-600 bg-neutral-800 text-neutral-400 transition hover:border-red-500/80 hover:bg-red-950/40 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+              title={powerOn ? "Power off" : "Power on"}
+              aria-label={powerOn ? "Power off" : "Power on"}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                <line x1="12" y1="2" x2="12" y2="12" />
+              </svg>
+            </button>
+            <span className="text-[10px] uppercase tracking-wider text-neutral-500">
+              Power
+            </span>
+          </div>
+          <div className="h-8 w-px bg-neutral-700" />
+          <div className="flex flex-col items-center gap-0.5">
+            <button
+              type="button"
+              onClick={channelDown}
+              disabled={!powerOn}
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border-2 border-neutral-600 bg-neutral-800 text-neutral-400 transition hover:border-neutral-400 hover:bg-neutral-700 hover:text-neutral-200 disabled:cursor-not-allowed disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-neutral-500"
+              title="Channel down"
+              aria-label="Channel down"
+            >
+              <span className="text-base font-bold leading-none">−</span>
+            </button>
+            <span className="text-[10px] uppercase tracking-wider text-neutral-500">
+              Ch −
+            </span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <button
+              type="button"
+              onClick={channelUp}
+              disabled={!powerOn}
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border-2 border-neutral-600 bg-neutral-800 text-neutral-400 transition hover:border-neutral-400 hover:bg-neutral-700 hover:text-neutral-200 disabled:cursor-not-allowed disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-neutral-500"
+              title="Channel up"
+              aria-label="Channel up"
+            >
+              <span className="text-base font-bold leading-none">+</span>
+            </button>
+            <span className="text-[10px] uppercase tracking-wider text-neutral-500">
+              Ch +
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop: instruction + channel above TV (only when power on) */}
       {powerOn && (
-        <div className="absolute left-1/2 -top-1 z-10 flex -translate-x-1/2 flex-col items-center gap-1 text-center">
+        <div className="absolute left-1/2 top-0 z-10 hidden -translate-x-1/2 flex-col items-center gap-1 pt-1 text-center md:flex">
           {TV_CHANNELS[channelIndex]?.url && (
             <p className="text-[10px] uppercase tracking-widest text-neutral-400">
               Click on screen to view project
@@ -63,7 +134,8 @@ export default function RetroTVPortfolio({
         </div>
       )}
 
-      <div className="absolute inset-0">
+      {/* TV canvas */}
+      <div className="relative min-h-0 flex-1 md:absolute md:inset-0">
         <R3FCanvas
           camera={{ position: [0, 0, 2.5], fov: 50 }}
           gl={{ antialias: true, alpha: true }}
@@ -79,8 +151,8 @@ export default function RetroTVPortfolio({
         </R3FCanvas>
       </div>
 
-      {/* Remote - right side, on top of container */}
-      <div className="absolute right-3 top-0 flex h-full flex-col items-center justify-center gap-3 py-4">
+      {/* Desktop: remote on the right, vertical */}
+      <div className="absolute right-3 top-0 hidden h-full flex-col items-center justify-center gap-3 py-4 md:flex">
         <button
           type="button"
           onClick={() => setPowerOn((p) => !p)}
@@ -88,7 +160,10 @@ export default function RetroTVPortfolio({
           title={powerOn ? "Power off" : "Power on"}
           aria-label={powerOn ? "Power off" : "Power on"}
         >
-          <span className="text-lg font-bold">⏻</span>
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+            <line x1="12" y1="2" x2="12" y2="12" />
+          </svg>
         </button>
         <span className="text-[10px] uppercase tracking-wider text-neutral-500">
           Power

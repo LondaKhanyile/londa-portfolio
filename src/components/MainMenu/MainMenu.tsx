@@ -4,7 +4,6 @@ import ParticleTechStack from "@/components/ParticleTechStack/ParticleTechStack"
 import DissolveOverlay from "@/components/DissolveOverlay/DissolveOverlay";
 import YouWinSlide from "@/components/YouWinSlide/YouWinSlide";
 import RetroTVPortfolio from "@/components/RetroTV/RetroTVPortfolio";
-import JournalPage from "@/components/JournalPage/JournalPage";
 import { JOURNAL_ENTRIES } from "@/data/journalEntries";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -56,10 +55,7 @@ export default function MainMenu() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("home");
   const [aboutSlide, setAboutSlide] = useState(0);
   const [aboutReplayKey, setAboutReplayKey] = useState(0);
-  const [writingSlide, setWritingSlide] = useState(0);
-  const [writingFlippingTo, setWritingFlippingTo] = useState<number | null>(null);
   const [expandedJournalId, setExpandedJournalId] = useState<string | null>(null);
-  const writingFlipInnerRef = useRef<HTMLDivElement | null>(null);
   const [transitionPhase, setTransitionPhase] = useState<"idle" | "dissolving" | "building">("idle");
   const nextSectionRef = useRef<ActiveSection | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,36 +64,6 @@ export default function MainMenu() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
-
-  // Booklet page flip: trigger flip when flippingTo is set, then reset on transition end
-  useEffect(() => {
-    if (writingFlippingTo === null) return;
-    const el = writingFlipInnerRef.current;
-    if (!el) return;
-    const raf = requestAnimationFrame(() => {
-      el.classList.add("booklet-flip-active");
-    });
-    const onEnd = () => {
-      const targetSlide = writingFlippingTo;
-      setWritingSlide(targetSlide);
-      // Reset transform after React has re-rendered (front face has new content) to avoid glitch
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          el.classList.remove("booklet-flip-active");
-          el.style.transition = "none";
-          el.style.transform = "";
-          void el.offsetHeight;
-          el.style.transition = "";
-          setWritingFlippingTo(null);
-        });
-      });
-    };
-    el.addEventListener("transitionend", onEnd, { once: true });
-    return () => {
-      cancelAnimationFrame(raf);
-      el.removeEventListener("transitionend", onEnd);
-    };
-  }, [writingFlippingTo]);
 
   // Sync activeSection from URL hash after mount (avoids hydration mismatch: server has no hash)
   useEffect(() => {
@@ -411,7 +377,7 @@ export default function MainMenu() {
           {showDissolveOn("projects") && <DissolveOverlay />}
         </div>
 
-        {/* Writing view: mobile = canvas + title + journal cards; desktop = booklet (cover + pages) */}
+        {/* Writing view: title + journal cards (mobile and desktop); click card to expand/collapse full journal, click outside to close */}
         <div
           className="absolute inset-0 flex flex-col"
           style={{
@@ -428,9 +394,8 @@ export default function MainMenu() {
               clipPath: buildFor("writing") ? "circle(0% at 50% 50%)" : undefined,
             }}
           >
-            {/* Mobile: title + journal cards on canvas; tap card to expand/collapse full journal, tap outside to close */}
             <div
-              className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-20 pb-24 md:hidden"
+              className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-20 pb-24 md:px-6 md:pt-6 md:pb-6"
               style={{
                 animation: buildFor("writing") ? "build-item-in 400ms ease-out both" : "none",
                 animationDelay: buildFor("writing") ? "100ms" : undefined,
@@ -438,16 +403,16 @@ export default function MainMenu() {
               onClick={() => setExpandedJournalId(null)}
               role="presentation"
             >
-              <h2 className="text-lg font-semibold tracking-wide text-neutral-200">
+              <h2 className="text-lg font-semibold tracking-wide text-neutral-200 md:text-xl">
                 My Dev Journal
               </h2>
-              <div className="mt-6 flex flex-col gap-4">
+              <div className="mt-6 flex flex-col gap-4 md:max-w-2xl md:gap-5">
                 {JOURNAL_ENTRIES.map((entry) => {
                   const isExpanded = expandedJournalId === entry.id;
                   return (
                     <article
                       key={entry.id}
-                      className="cursor-pointer rounded-lg border border-neutral-700/80 bg-neutral-900/50 px-4 py-3 backdrop-blur-sm transition-shadow hover:border-neutral-600"
+                      className="cursor-pointer rounded-lg border border-neutral-700/80 bg-neutral-900/50 px-4 py-3 backdrop-blur-sm transition-shadow hover:border-neutral-600 md:px-5 md:py-4"
                       onClick={(e) => {
                         e.stopPropagation();
                         setExpandedJournalId(isExpanded ? null : entry.id);
@@ -463,14 +428,14 @@ export default function MainMenu() {
                       aria-expanded={isExpanded}
                       aria-label={isExpanded ? `Collapse ${entry.title}` : `Expand ${entry.title}`}
                     >
-                      <h3 className="text-sm font-semibold leading-snug text-neutral-200">
+                      <h3 className="text-sm font-semibold leading-snug text-neutral-200 md:text-base">
                         {entry.title}
                       </h3>
-                      <p className="mt-1.5 text-xs leading-relaxed text-neutral-400">
+                      <p className="mt-1.5 text-xs leading-relaxed text-neutral-400 md:mt-2 md:text-sm">
                         {entry.blurb}
                       </p>
                       {isExpanded && (
-                        <div className="mt-4 space-y-3 border-t border-neutral-700/80 pt-4 text-xs leading-relaxed text-neutral-400">
+                        <div className="mt-4 space-y-3 border-t border-neutral-700/80 pt-4 text-xs leading-relaxed text-neutral-400 md:mt-5 md:space-y-4 md:pt-5 md:text-sm">
                           {entry.body.map((paragraph, i) => (
                             <p key={i}>{paragraph}</p>
                           ))}
@@ -480,108 +445,6 @@ export default function MainMenu() {
                   );
                 })}
               </div>
-            </div>
-
-            {/* Desktop: booklet */}
-            <div className="hidden h-full flex-col justify-center md:flex">
-              <div className="booklet-surface h-[min(65vh,520px)] w-full shrink-0">
-                <div className="booklet-flip h-full w-full">
-                  <div
-                    ref={writingFlipInnerRef}
-                    className="booklet-flip-inner h-full w-full"
-                  >
-                    <div className="booklet-face booklet-face-front">
-                {writingSlide === 0 ? (
-                  <div className="booklet-cover flex h-full flex-col items-center justify-center gap-2 px-8 py-10 text-center">
-                    <h2 className="text-center text-lg font-bold tracking-wide text-neutral-300 sm:text-xl">
-                      My Dev Journal
-                    </h2>
-                    <p className="text-xs tracking-[0.3em] text-neutral-500">
-                      — essays & notes —
-                    </p>
-                    <p className="mt-6 text-[10px] uppercase tracking-widest text-neutral-600">
-                      Read the manual
-                    </p>
-                  </div>
-                ) : writingSlide === 1 ? (
-                  <JournalPage
-                    entry={JOURNAL_ENTRIES[0]}
-                    pageNumber={1}
-                    buildFor={buildFor("writing")}
-                  />
-                ) : (
-                  <JournalPage
-                    entry={JOURNAL_ENTRIES[1]}
-                    pageNumber={2}
-                    buildFor={buildFor("writing")}
-                  />
-                )}
-                    </div>
-                    <div className="booklet-face booklet-face-back">
-                      {writingFlippingTo === 0 ? (
-                        <div className="booklet-cover flex h-full flex-col items-center justify-center gap-2 px-8 py-10 text-center">
-                          <h2 className="text-center text-lg font-bold tracking-wide text-neutral-300 sm:text-xl">
-                            My Dev Journal
-                          </h2>
-                          <p className="text-xs tracking-[0.3em] text-neutral-500">
-                            — essays & notes —
-                          </p>
-                          <p className="mt-6 text-[10px] uppercase tracking-widest text-neutral-600">
-                            Read the manual
-                          </p>
-                        </div>
-                      ) : writingFlippingTo === 1 ? (
-                        <JournalPage
-                          entry={JOURNAL_ENTRIES[0]}
-                          pageNumber={1}
-                          buildFor={buildFor("writing")}
-                        />
-                      ) : writingFlippingTo === 2 ? (
-                        <JournalPage
-                          entry={JOURNAL_ENTRIES[1]}
-                          pageNumber={2}
-                          buildFor={buildFor("writing")}
-                        />
-                      ) : (
-                        <div className="booklet-cover flex h-full flex-col items-center justify-center gap-2 px-8 py-10 text-center">
-                          <h2 className="text-center text-lg font-bold tracking-wide text-neutral-300 sm:text-xl">
-                            My Dev Journal
-                          </h2>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <nav
-                className="relative z-10 mt-6 flex shrink-0 items-center justify-center gap-3 pb-2 md:flex hidden"
-                aria-label="Writing section navigation"
-                style={{
-                  pointerEvents: "auto",
-                  animation: buildFor("writing") ? "build-item-in 400ms ease-out both" : "none",
-                  animationDelay: buildFor("writing") ? "340ms" : undefined,
-                }}
-              >
-                {[0, 1, 2].map((i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => {
-                      if (i !== writingSlide && writingFlippingTo === null) {
-                        setWritingFlippingTo(i);
-                      }
-                    }}
-                    disabled={writingFlippingTo !== null}
-                    className={`h-1.5 w-1.5 cursor-pointer rounded-full transition-all duration-300 hover:scale-125 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950 disabled:cursor-not-allowed disabled:opacity-60 ${
-                      i === writingSlide
-                        ? "scale-125 bg-neutral-400"
-                        : "bg-neutral-600/60 hover:bg-neutral-500/80"
-                    }`}
-                    aria-label={i === 0 ? "Booklet cover" : `Page ${i}`}
-                    aria-current={i === writingSlide ? "true" : undefined}
-                  />
-                ))}
-              </nav>
             </div>
           </div>
           {showDissolveOn("writing") && <DissolveOverlay />}
@@ -604,16 +467,16 @@ export default function MainMenu() {
               clipPath: buildFor("contact") ? "circle(0% at 50% 50%)" : undefined,
             }}
           >
-            <div className="flex h-full flex-col justify-center">
-              <div
-                className="contact-card mx-auto w-full max-w-md shrink-0 px-6 py-8 sm:px-8 sm:py-10"
-                style={{
-                  animation: buildFor("contact") ? "build-item-in 400ms ease-out both" : "none",
-                  animationDelay: buildFor("contact") ? "100ms" : undefined,
-                }}
-              >
+            <div
+              className="flex min-h-full flex-col justify-center overflow-y-auto px-6 py-8 sm:px-8 sm:py-10"
+              style={{
+                animation: buildFor("contact") ? "build-item-in 400ms ease-out both" : "none",
+                animationDelay: buildFor("contact") ? "100ms" : undefined,
+              }}
+            >
+              <div className="mx-auto w-full max-w-md">
                 <p
-                  className="mb-1 text-[10px] font-medium tracking-[0.25em] text-neutral-500 uppercase"
+                  className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-neutral-500"
                   aria-hidden
                 >
                   Get in touch
@@ -703,7 +566,7 @@ export default function MainMenu() {
                 aria-current={isActive ? "true" : undefined}
                 disabled={transitionPhase !== "idle"}
               >
-                {item.label}
+                {item.id === "about" ? "About" : item.label}
               </button>
             );
           })}

@@ -4,6 +4,34 @@
   --font-sans: var(--font-syne), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Scrollbar: match dark neutral aesthetic, no change to behavior */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(82 82 82) rgb(23 23 23);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgb(23 23 23);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgb(82 82 82);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(115 115 115);
+}
+
+*::-webkit-scrollbar-corner {
+  background: rgb(23 23 23);
+}
+
 @keyframes ambient-shift {
   0%,
   100% {

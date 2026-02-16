@@ -1,13 +1,13 @@
-import Navbar from "@/components/Navbar/Navbar";
-import Hero from "@/components/Hero/Hero";
-import Footer from "@/components/Footer/Footer";
+import AmbientBackground from "@/components/AmbientBackground/AmbientBackground";
+import MainMenu from "@/components/MainMenu/MainMenu";
+import MouseGlow from "@/components/MouseGlow/MouseGlow";
 
 export default function Home() {
   return (
-    <>
-      <Navbar />
-      <Hero />
-      <Footer />
-    </>
+    <main className="relative min-h-screen max-md:h-screen max-md:overflow-hidden max-md:overscroll-none">
+      <AmbientBackground />
+      <MouseGlow />
+      <MainMenu />
+    </main>
   );
 }

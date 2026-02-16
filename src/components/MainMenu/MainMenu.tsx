@@ -1,0 +1,625 @@
+"use client";
+
+import ParticleTechStack from "@/components/ParticleTechStack/ParticleTechStack";
+import DissolveOverlay from "@/components/DissolveOverlay/DissolveOverlay";
+import YouWinSlide from "@/components/YouWinSlide/YouWinSlide";
+import RetroTVPortfolio from "@/components/RetroTV/RetroTVPortfolio";
+import TVErrorBoundary from "@/components/RetroTV/TVErrorBoundary";
+import { JOURNAL_ENTRIES } from "@/data/journalEntries";
+import { useState, useRef, useEffect } from "react";
+import {
+  SiTypescript,
+  SiNextdotjs,
+  SiReact,
+  SiTailwindcss,
+  SiNodedotjs,
+  SiSupabase,
+  SiPostgresql,
+  SiGit,
+} from "react-icons/si";
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const set = () => setIsDesktop(mq.matches);
+    set();
+    mq.addEventListener("change", set);
+    return () => mq.removeEventListener("change", set);
+  }, []);
+  return isDesktop;
+}
+
+type ActiveSection = "home" | "about" | "projects" | "writing" | "contact";
+
+const MENU_ITEMS: { id: ActiveSection; href: string; label: string }[] = [
+  { id: "home", href: "#", label: "Home" },
+  { id: "about", href: "#about", label: "About Me" },
+  { id: "projects", href: "#projects", label: "Projects" },
+  { id: "writing", href: "#writing", label: "Writing" },
+  { id: "contact", href: "#contact", label: "Contact" },
+];
+
+const SECTIONS: ActiveSection[] = ["home", "about", "projects", "writing", "contact"];
+
+function getSectionFromHash(): ActiveSection {
+  if (typeof window === "undefined") return "home";
+  const h = window.location.hash.slice(1).toLowerCase();
+  return (SECTIONS.includes(h as ActiveSection) ? h : "home") as ActiveSection;
+}
+
+const DISSOLVE_MS = 2200;
+const BUILD_MS = 1000;
+
+export default function MainMenu() {
+  const isDesktop = useIsDesktop();
+  const [activeSection, setActiveSection] = useState<ActiveSection>("home");
+  const [aboutSlide, setAboutSlide] = useState(0);
+  const [aboutReplayKey, setAboutReplayKey] = useState(0);
+  const [expandedJournalId, setExpandedJournalId] = useState<string | null>(null);
+  const [transitionPhase, setTransitionPhase] = useState<"idle" | "dissolving" | "building">("idle");
+  const nextSectionRef = useRef<ActiveSection | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  // Sync activeSection from URL hash after mount (avoids hydration mismatch: server has no hash)
+  useEffect(() => {
+    const section = getSectionFromHash();
+    if (section !== "home") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: sync from URL on mount
+      setActiveSection(section);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      if (transitionPhase !== "idle") return;
+      setActiveSection(getSectionFromHash());
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, [transitionPhase]);
+
+  // Update URL hash when transitioning (side effect, avoids immutability lint)
+  useEffect(() => {
+    if (transitionPhase === "dissolving" && nextSectionRef.current) {
+      const hash = nextSectionRef.current === "home" ? "" : nextSectionRef.current;
+      const url = hash ? `${window.location.pathname}#${hash}` : window.location.pathname;
+      window.history.replaceState(null, "", url);
+    }
+  }, [transitionPhase]);
+
+  const handleNavClick = (item: (typeof MENU_ITEMS)[number]) => {
+    if (item.id === activeSection && transitionPhase === "idle") return;
+    if (transitionPhase !== "idle") return;
+
+    nextSectionRef.current = item.id;
+    setTransitionPhase("dissolving");
+
+    timeoutRef.current = setTimeout(() => {
+      setActiveSection(item.id);
+      setTransitionPhase("building");
+      nextSectionRef.current = null;
+
+      timeoutRef.current = setTimeout(() => {
+        setTransitionPhase("idle");
+        timeoutRef.current = null;
+      }, BUILD_MS);
+    }, DISSOLVE_MS);
+  };
+
+  const isDissolving = transitionPhase === "dissolving";
+  const isBuilding = transitionPhase === "building";
+
+  const showFor = (section: ActiveSection) => activeSection === section;
+  const showDissolveOn = (section: ActiveSection) =>
+    isDissolving && activeSection === section;
+  const buildFor = (section: ActiveSection) =>
+    activeSection === section && isBuilding;
+
+  const showHome = showFor("home");
+  const showAbout = showFor("about");
+  const showProjects = showFor("projects");
+  const showWriting = showFor("writing");
+  const showContact = showFor("contact");
+
+  return (
+    <section
+      className="relative z-10 flex min-h-screen flex-col justify-center px-6 pt-12 sm:pl-12 sm:pr-12 sm:pt-16"
+      aria-label="Main menu"
+    >
+      {/* Tech stack block: outside transformed panel so fixed = viewport, mobile only, just under nav */}
+      <div
+        className="fixed left-4 right-4 top-[32vh] z-10 max-w-[400px] md:hidden"
+        style={{
+          opacity: showHome && !showDissolveOn("home") ? 1 : 0,
+          transition: "opacity 400ms ease-out",
+          pointerEvents: "none",
+        }}
+      >
+        <div className="-mt-4">
+          <h2 className="text-lg font-semibold tracking-wide text-neutral-200">Tech stack</h2>
+          <p className="mt-3 text-sm leading-relaxed text-neutral-400">
+            I build with TypeScript, React, and Next.js for type-safe, fast UIs and APIs. Tailwind keeps styling consistent and quick to iterate. On the backend I use Node.js with Supabase and PostgreSQL for auth and data, and I lean on Git and modern tooling so the stack stays reliable and easy to ship.
+          </p>
+        </div>
+        <div className="mt-10 flex flex-col gap-3" aria-label="Tech stack tools">
+          <div className="flex flex-wrap items-center gap-4">
+            <SiTypescript className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiNextdotjs className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiReact className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiTailwindcss className="h-6 w-6 text-neutral-400" aria-hidden />
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <SiNodedotjs className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiSupabase className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiPostgresql className="h-6 w-6 text-neutral-400" aria-hidden />
+            <SiGit className="h-6 w-6 text-neutral-400" aria-hidden />
+          </div>
+        </div>
+      </div>
+
+      {/* Right panel: constellation, About Me, or Projects. Mobile: same bg as body so no black band above "Available for work". */}
+      <div
+        className={`absolute overflow-hidden ${
+          activeSection === "about"
+            ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[44%] md:right-[10%] md:top-[10%] md:bottom-[5%] md:bg-transparent md:bg-none"
+            : activeSection === "projects"
+              ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[32%] md:right-[10%] md:top-[53%] md:bottom-auto md:h-[min(80vh,600px)] md:-translate-y-1/2 md:bg-transparent md:bg-none"
+              : activeSection === "home"
+                ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[64%] md:top-[53%] md:bottom-auto md:h-[min(80vh,600px)] md:w-[min(45vw,420px)] md:-translate-x-1/2 md:-translate-y-1/2 md:bg-transparent md:bg-none"
+                : activeSection === "writing"
+                  ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[64%] md:top-[53%] md:bottom-auto md:h-[min(80vh,600px)] md:w-[min(45vw,420px)] md:-translate-x-1/2 md:-translate-y-1/2 md:bg-transparent md:bg-none"
+                  : activeSection === "contact"
+                    ? "left-0 right-0 top-0 bottom-0 bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.24),transparent)] md:left-[64%] md:top-[53%] md:bottom-auto md:h-[min(80vh,600px)] md:w-[min(45vw,420px)] md:-translate-x-1/2 md:-translate-y-1/2 md:bg-transparent md:bg-none"
+                    : "left-[64%] w-[min(45vw,420px)] top-[53%] h-[min(80vh,600px)] -translate-x-1/2 -translate-y-1/2"
+        }`}
+        aria-live="polite"
+      >
+        {/* Constellation view: desktop = full interactive (dots, hover). Mobile = background only. When home, z-20 so dots sit above other section layers. */}
+        <div
+          className={`absolute inset-0 flex flex-col items-center ${showHome ? "z-20" : "z-0"}`}
+          style={{
+            opacity: showHome ? 1 : 0,
+            transition: showHome ? "opacity 400ms ease-out" : "none",
+            pointerEvents:
+              activeSection === "home" && transitionPhase === "idle" && isDesktop ? "auto" : "none",
+          }}
+        >
+          <div
+            className="flex h-full w-full flex-col items-center opacity-50 transition-opacity duration-[2200ms] ease-out md:opacity-100"
+            style={{
+              opacity: showDissolveOn("home") ? 0 : undefined,
+              animation: buildFor("home") ? `build-reveal ${BUILD_MS}ms ease-out forwards` : "none",
+              clipPath: buildFor("home") ? "circle(0% at 50% 50%)" : undefined,
+            }}
+          >
+            <ParticleTechStack embedded />
+          </div>
+          {showDissolveOn("home") && <DissolveOverlay />}
+        </div>
+
+        {/* Home foreground: mobile only — content on top of constellation. Desktop has no overlay. */}
+        <div
+          className="absolute inset-0 z-10 flex flex-col items-center justify-start px-4 md:hidden"
+          style={{
+            opacity: showHome ? 1 : 0,
+            transition: showHome ? "opacity 400ms ease-out" : "none",
+            pointerEvents: activeSection === "home" && transitionPhase === "idle" ? "auto" : "none",
+          }}
+        >
+          <div
+            className="flex w-full flex-col items-start transition-opacity duration-[2200ms] ease-out"
+            style={{
+              opacity: showDissolveOn("home") ? 0 : 1,
+              animation: buildFor("home") ? `build-reveal ${BUILD_MS}ms ease-out forwards` : "none",
+              clipPath: buildFor("home") ? "circle(0% at 50% 50%)" : undefined,
+            }}
+          >
+            {/* Add your headline, tagline, or other content here */}
+          </div>
+        </div>
+
+        {/* About Me view (2 dots) */}
+        <div
+          className="absolute inset-0 flex flex-col"
+          style={{
+            opacity: showAbout ? 1 : 0,
+            transition: showAbout ? "opacity 400ms ease-out" : "none",
+            pointerEvents: activeSection === "about" && transitionPhase === "idle" ? "auto" : "none",
+          }}
+        >
+          <div
+            className="flex h-full w-full flex-col transition-opacity duration-[2200ms] ease-out"
+            style={{
+              opacity: showDissolveOn("about") ? 0 : 1,
+              animation: buildFor("about") ? `build-reveal ${BUILD_MS}ms ease-out forwards` : "none",
+              clipPath: buildFor("about") ? "circle(0% at 50% 50%)" : undefined,
+            }}
+          >
+            <div className="flex h-full flex-col justify-center">
+              {/* Mobile: left/right buttons above content, aligned right; z-10 so they stay clickable */}
+              <div className="relative z-10 flex shrink-0 justify-end gap-5 px-4 pt-20 md:hidden">
+                <button
+                  type="button"
+                  onClick={() => setAboutSlide(0)}
+                  disabled={aboutSlide === 0}
+                  className="flex h-10 w-10 min-w-[2.5rem] items-center justify-center rounded-full border border-neutral-600 bg-neutral-900/80 text-neutral-400 transition hover:border-neutral-500 hover:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 focus:ring-offset-neutral-950 disabled:cursor-default disabled:opacity-40 disabled:hover:border-neutral-600 disabled:hover:text-neutral-400"
+                  aria-label="Back to essay"
+                >
+                  <span className="text-lg leading-none">←</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAboutSlide(1)}
+                  disabled={aboutSlide === 1}
+                  className="flex h-10 w-10 min-w-[2.5rem] items-center justify-center rounded-full border border-neutral-600 bg-neutral-900/80 text-neutral-400 transition hover:border-neutral-500 hover:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 focus:ring-offset-neutral-950 disabled:cursor-default disabled:opacity-40 disabled:hover:border-neutral-600 disabled:hover:text-neutral-400"
+                  aria-label="Go to game"
+                >
+                  <span className="text-lg leading-none">→</span>
+                </button>
+              </div>
+              {/* Mobile: essay or game */}
+              {aboutSlide === 0 ? (
+                <div
+                  className="notepad-scroll flex min-h-0 flex-1 flex-col justify-center overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 pt-4 pb-20 md:hidden"
+                  style={{
+                    animation: buildFor("about") ? "build-item-in 400ms ease-out both" : "none",
+                    animationDelay: buildFor("about") ? "100ms" : undefined,
+                  }}
+                >
+                  <div className="mx-auto my-auto mt-1 w-full max-w-full space-y-4 pr-2 text-left text-sm leading-relaxed text-neutral-400">
+                    <p>
+                      I grew up in the early 2000s, when gizmos and gadgets were everywhere and every new thing felt a bit magical. The PS2 era in particular showed me what software could do—how it could pull you into a world that felt real. That sense of wonder stuck. As I got older, I kept wanting to recreate a little of that magic for others.
+                    </p>
+                    <p>
+                      My path into software wasn&apos;t a straight line, but when I finally got here, it felt like home. I get to turn ideas—mine and others&apos;—into reality through code. That means unleashing creativity while solving real problems, which matters more than ever now that so much of life runs on what we build.
+                    </p>
+                    <p>
+                      I take a practical view when building: I don&apos;t build for looks alone. The end product has to serve a clear purpose or achieve something specific. Pretty is nice; useful is what I aim for.
+                    </p>
+                    <p>
+                      I&apos;m kind, I work well in a team, and I don&apos;t give up when things get hard. I&apos;m also adaptive—something that&apos;s essential in the fast-paced world of software. That&apos;s a little about me.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex min-h-0 flex-1 items-center justify-center px-4 md:hidden">
+                  <YouWinSlide key={aboutReplayKey} onReplay={() => setAboutReplayKey((k) => k + 1)} />
+                </div>
+              )}
+              {/* Desktop: essay on canvas or game */}
+              <div className="hidden md:flex md:flex-1 md:min-h-0 md:flex-col">
+                {aboutSlide === 0 ? (
+                  <div
+                    className="notepad-scroll flex min-h-0 flex-1 flex-col justify-center overflow-y-auto overflow-x-hidden overscroll-y-contain px-6 py-6"
+                    style={{
+                      animation: buildFor("about") ? "build-item-in 400ms ease-out both" : "none",
+                      animationDelay: buildFor("about") ? "100ms" : undefined,
+                    }}
+                  >
+                    <div className="mx-auto w-full max-w-xl space-y-4 pr-2 text-left text-sm leading-relaxed text-neutral-400">
+                      <p>
+                        I grew up in the early 2000s, when gizmos and gadgets were everywhere and every new thing felt a bit magical. The PS2 era in particular showed me what software could do—how it could pull you into a world that felt real. That sense of wonder stuck. As I got older, I kept wanting to recreate a little of that magic for others.
+                      </p>
+                      <p>
+                        My path into software wasn&apos;t a straight line, but when I finally got here, it felt like home. I get to turn ideas—mine and others&apos;—into reality through code. That means unleashing creativity while solving real problems, which matters more than ever now that so much of life runs on what we build.
+                      </p>
+                      <p>
+                        I take a practical view when building: I don&apos;t build for looks alone. The end product has to serve a clear purpose or achieve something specific. Pretty is nice; useful is what I aim for.
+                      </p>
+                      <p>
+                        I&apos;m kind, I work well in a team, and I don&apos;t give up when things get hard. I&apos;m also adaptive—something that&apos;s essential in the fast-paced world of software. That&apos;s a little about me.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative flex min-h-0 flex-1 items-center justify-center">
+                    <YouWinSlide key={aboutReplayKey} onReplay={() => setAboutReplayKey((k) => k + 1)} />
+                  </div>
+                )}
+              </div>
+              <nav
+                className="relative z-10 mt-6 flex shrink-0 items-center justify-center gap-3 pb-2"
+                aria-label="About section navigation"
+                style={{
+                  pointerEvents: "auto",
+                  animation: buildFor("about") ? "build-item-in 400ms ease-out both" : "none",
+                  animationDelay: buildFor("about") ? "340ms" : undefined,
+                }}
+              >
+                {[0, 1].map((i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setAboutSlide(i)}
+                    className={`h-1.5 w-1.5 cursor-pointer rounded-full transition-all duration-300 hover:scale-125 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950 ${
+                      i === aboutSlide
+                        ? "scale-125 bg-neutral-400"
+                        : "bg-neutral-600/60 hover:bg-neutral-500/80"
+                    }`}
+                    aria-label={`About slide ${i + 1}`}
+                    aria-current={i === aboutSlide ? "true" : undefined}
+                  />
+                ))}
+              </nav>
+            </div>
+          </div>
+          {showDissolveOn("about") && <DissolveOverlay />}
+        </div>
+
+        {/* Projects view: Retro TV */}
+        <div
+          className="absolute inset-0 flex flex-col"
+          style={{
+            opacity: showProjects ? 1 : 0,
+            transition: showProjects ? "opacity 400ms ease-out" : "none",
+            pointerEvents: activeSection === "projects" && transitionPhase === "idle" ? "auto" : "none",
+          }}
+        >
+          <div
+            className="flex h-full w-full flex-col transition-opacity duration-[2200ms] ease-out"
+            style={{
+              opacity: showDissolveOn("projects") ? 0 : 1,
+              animation: buildFor("projects") ? `build-reveal ${BUILD_MS}ms ease-out forwards` : "none",
+              clipPath: buildFor("projects") ? "circle(0% at 50% 50%)" : undefined,
+            }}
+          >
+            <div className="relative flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center md:block">
+              <div className="h-[65vh] w-[95vw] min-h-0 min-w-0 shrink-0 md:h-full md:w-full md:max-h-none md:max-w-none">
+                {activeSection === "projects" && (
+                  <TVErrorBoundary>
+                    <RetroTVPortfolio className="h-full min-h-[200px] md:min-h-[320px]" />
+                  </TVErrorBoundary>
+                )}
+              </div>
+            </div>
+          </div>
+          {showDissolveOn("projects") && <DissolveOverlay />}
+        </div>
+
+        {/* Writing view: title + journal cards (mobile and desktop); click card to expand/collapse full journal, click outside to close */}
+        <div
+          className="absolute inset-0 flex flex-col"
+          style={{
+            opacity: showWriting ? 1 : 0,
+            transition: showWriting ? "opacity 400ms ease-out" : "none",
+            pointerEvents: activeSection === "writing" && transitionPhase === "idle" ? "auto" : "none",
+          }}
+        >
+          <div
+            className="flex h-full w-full flex-col transition-opacity duration-[2200ms] ease-out"
+            style={{
+              opacity: showDissolveOn("writing") ? 0 : 1,
+              animation: buildFor("writing") ? `build-reveal ${BUILD_MS}ms ease-out forwards` : "none",
+              clipPath: buildFor("writing") ? "circle(0% at 50% 50%)" : undefined,
+            }}
+          >
+            <div
+              className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-20 pb-24 md:px-6 md:pt-6 md:pb-6"
+              style={{
+                animation: buildFor("writing") ? "build-item-in 400ms ease-out both" : "none",
+                animationDelay: buildFor("writing") ? "100ms" : undefined,
+              }}
+              onClick={() => setExpandedJournalId(null)}
+              role="presentation"
+            >
+              <h2 className="text-lg font-semibold tracking-wide text-neutral-200 md:text-xl">
+                My Dev Journal
+              </h2>
+              <div className="mt-6 flex flex-col gap-4 md:max-w-2xl md:gap-5">
+                {JOURNAL_ENTRIES.map((entry) => {
+                  const isExpanded = expandedJournalId === entry.id;
+                  return (
+                    <article
+                      key={entry.id}
+                      className="cursor-pointer rounded-lg border border-neutral-700/80 bg-neutral-900/50 px-4 py-3 backdrop-blur-sm transition-shadow hover:border-neutral-600 md:px-5 md:py-4"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedJournalId(isExpanded ? null : entry.id);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setExpandedJournalId(isExpanded ? null : entry.id);
+                        }
+                      }}
+                      aria-expanded={isExpanded}
+                      aria-label={isExpanded ? `Collapse ${entry.title}` : `Expand ${entry.title}`}
+                    >
+                      <h3 className="text-sm font-semibold leading-snug text-neutral-200 md:text-base">
+                        {entry.title}
+                      </h3>
+                      <p className="mt-1.5 text-xs leading-relaxed text-neutral-400 md:mt-2 md:text-sm">
+                        {entry.blurb}
+                      </p>
+                      {isExpanded && (
+                        <div className="mt-4 space-y-3 border-t border-neutral-700/80 pt-4 text-xs leading-relaxed text-neutral-400 md:mt-5 md:space-y-4 md:pt-5 md:text-sm">
+                          {entry.body.map((paragraph, i) => (
+                            <p key={i}>{paragraph}</p>
+                          ))}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          {showDissolveOn("writing") && <DissolveOverlay />}
+        </div>
+
+        {/* Contact view */}
+        <div
+          className="absolute inset-0 flex flex-col"
+          style={{
+            opacity: showContact ? 1 : 0,
+            transition: showContact ? "opacity 400ms ease-out" : "none",
+            pointerEvents: activeSection === "contact" && transitionPhase === "idle" ? "auto" : "none",
+          }}
+        >
+          <div
+            className="flex h-full w-full flex-col transition-opacity duration-[2200ms] ease-out"
+            style={{
+              opacity: showDissolveOn("contact") ? 0 : 1,
+              animation: buildFor("contact") ? `build-reveal ${BUILD_MS}ms ease-out forwards` : "none",
+              clipPath: buildFor("contact") ? "circle(0% at 50% 50%)" : undefined,
+            }}
+          >
+            <div
+              className="flex min-h-full flex-col justify-center overflow-y-auto px-6 py-8 sm:px-8 sm:py-10"
+              style={{
+                animation: buildFor("contact") ? "build-item-in 400ms ease-out both" : "none",
+                animationDelay: buildFor("contact") ? "100ms" : undefined,
+              }}
+            >
+              <div className="mx-auto w-full max-w-md">
+                <p
+                  className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-neutral-500"
+                  aria-hidden
+                >
+                  Get in touch
+                </p>
+                <h2 className="mb-1 text-xl font-semibold tracking-tight text-neutral-200 sm:text-2xl">
+                  Let&apos;s work together
+                </h2>
+                <p className="mb-8 text-sm text-neutral-400">
+                  Londa Sihe Khanyile
+                </p>
+                <ul className="contact-list space-y-6" role="list">
+                  <li className="contact-list-item">
+                    <span className="contact-label">Email</span>
+                    <a
+                      href="mailto:lskhanyile98@gmail.com"
+                      className="contact-link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      lskhanyile98@gmail.com
+                    </a>
+                  </li>
+                  <li className="contact-list-item">
+                    <span className="contact-label">Phone</span>
+                    <a
+                      href="tel:+27718723121"
+                      className="contact-link"
+                    >
+                      +27 71 872 3121
+                    </a>
+                  </li>
+                  <li className="contact-list-item">
+                    <span className="contact-label">GitHub</span>
+                    <a
+                      href="https://github.com/londakhanyile"
+                      className="contact-link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      github.com/londakhanyile
+                    </a>
+                  </li>
+                  <li className="contact-list-item">
+                    <span className="contact-label">LinkedIn</span>
+                    <a
+                      href="https://www.linkedin.com/in/londakhanyile"
+                      className="contact-link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      linkedin.com/in/londakhanyile
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          {showDissolveOn("contact") && <DissolveOverlay />}
+        </div>
+      </div>
+
+      {/* Mobile: top navbar */}
+      <header
+        className="fixed left-0 right-0 top-0 z-20 md:hidden"
+        aria-label="Mobile navigation"
+      >
+        <nav
+          className="mobile-nav-bar flex items-center justify-center gap-x-5 px-4 py-3.5"
+          aria-label="Primary navigation"
+        >
+          {MENU_ITEMS.map((item) => {
+            const isActive = item.id === activeSection;
+            const isInactiveGray = !isActive;
+
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => handleNavClick(item)}
+                className={`cursor-pointer text-sm font-semibold tracking-wide transition-all duration-200 hover:text-neutral-100 ${
+                  isActive
+                    ? "text-neutral-100"
+                    : isInactiveGray
+                      ? "text-neutral-500"
+                      : "text-neutral-400"
+                }`}
+                aria-current={isActive ? "true" : undefined}
+                disabled={transitionPhase !== "idle"}
+              >
+                {item.id === "about" ? "About" : item.label}
+              </button>
+            );
+          })}
+        </nav>
+      </header>
+
+      {/* Mobile: Available for work – hidden on About Me game so cannon has space */}
+      {!(activeSection === "about" && aboutSlide === 1) && (
+        <div className="fixed bottom-0 left-0 right-0 z-20 flex flex-col items-center bg-neutral-950/80 pb-8 backdrop-blur-sm md:hidden">
+          <p className="animate-available-glow w-full py-4 text-center text-xs tracking-widest text-neutral-500">
+            Available for work
+          </p>
+        </div>
+      )}
+
+      {/* Desktop: unchanged nav and label */}
+      <nav
+        className="hidden flex-col gap-6 sm:gap-8 md:flex"
+        aria-label="Primary navigation"
+      >
+        {MENU_ITEMS.map((item) => {
+          const isActive = item.id === activeSection;
+          const isInactiveGray = !isActive;
+
+          return (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => handleNavClick(item)}
+              className={`group relative w-fit cursor-pointer text-left text-lg font-extrabold tracking-[0.1em] transition-all duration-300 hover:scale-105 hover:text-neutral-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.15)] sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl ${
+                isActive
+                  ? "scale-105 text-neutral-100 drop-shadow-[0_0_6px_rgba(255,255,255,0.2)]"
+                  : isInactiveGray
+                    ? "text-neutral-500"
+                    : "text-neutral-300"
+              }`}
+              aria-current={isActive ? "true" : undefined}
+              disabled={transitionPhase !== "idle"}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      <p className="animate-available-glow hidden pt-16 text-xs tracking-widest text-neutral-500 sm:pt-20 md:block">
+        Available for work
+      </p>
+    </section>
+  );
+}

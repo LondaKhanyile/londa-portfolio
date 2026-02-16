@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useGLTF } from "@react-three/drei";
 import TvScene from "./TvScene";
@@ -25,6 +25,15 @@ export default function RetroTVPortfolio({
   const [powerOn, setPowerOn] = useState(false);
   const [channelIndex, setChannelIndex] = useState(0);
   const [showStatic, setShowStatic] = useState(false);
+  const [maxDpr, setMaxDpr] = useState(2);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const set = () => setMaxDpr(mq.matches ? 1.5 : 2);
+    set();
+    mq.addEventListener("change", set);
+    return () => mq.removeEventListener("change", set);
+  }, []);
 
   const STATIC_DURATION_MS = 250;
 
@@ -140,7 +149,7 @@ export default function RetroTVPortfolio({
           camera={{ position: [0, 0, 2.5], fov: 50 }}
           gl={{ antialias: true, alpha: true }}
           onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
-          dpr={[1, 2]}
+          dpr={[1, maxDpr]}
         >
           <TvScene
             powerOn={powerOn}

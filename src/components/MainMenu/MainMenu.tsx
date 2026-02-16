@@ -4,6 +4,7 @@ import ParticleTechStack from "@/components/ParticleTechStack/ParticleTechStack"
 import DissolveOverlay from "@/components/DissolveOverlay/DissolveOverlay";
 import YouWinSlide from "@/components/YouWinSlide/YouWinSlide";
 import RetroTVPortfolio from "@/components/RetroTV/RetroTVPortfolio";
+import TVErrorBoundary from "@/components/RetroTV/TVErrorBoundary";
 import { JOURNAL_ENTRIES } from "@/data/journalEntries";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -370,7 +371,11 @@ export default function MainMenu() {
           >
             <div className="relative flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center md:block">
               <div className="h-[65vh] w-[95vw] min-h-0 min-w-0 shrink-0 md:h-full md:w-full md:max-h-none md:max-w-none">
-                <RetroTVPortfolio className="h-full min-h-[200px] md:min-h-[320px]" />
+                {activeSection === "projects" && (
+                  <TVErrorBoundary>
+                    <RetroTVPortfolio className="h-full min-h-[200px] md:min-h-[320px]" />
+                  </TVErrorBoundary>
+                )}
               </div>
             </div>
           </div>

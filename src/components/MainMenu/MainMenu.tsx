@@ -3,10 +3,11 @@
 import ParticleTechStack from "@/components/ParticleTechStack/ParticleTechStack";
 import DissolveOverlay from "@/components/DissolveOverlay/DissolveOverlay";
 import YouWinSlide from "@/components/YouWinSlide/YouWinSlide";
+import ProjectCards from "@/components/RetroTV/ProjectCards";
 import RetroTVPortfolio from "@/components/RetroTV/RetroTVPortfolio";
 import TVErrorBoundary from "@/components/RetroTV/TVErrorBoundary";
 import { JOURNAL_ENTRIES } from "@/data/journalEntries";
-import { useState, useRef, useEffect } from "react";
+import { useSyncExternalStore, useState, useRef, useEffect } from "react";
 import {
   SiTypescript,
   SiNextdotjs,
@@ -45,14 +46,31 @@ const SECTIONS: ActiveSection[] = ["home", "about", "projects", "writing", "cont
 function getSectionFromHash(): ActiveSection {
   if (typeof window === "undefined") return "home";
   const h = window.location.hash.slice(1).toLowerCase();
-  return (SECTIONS.includes(h as ActiveSection) ? h : "home") as ActiveSection;
+  const section = h.split("?")[0] || h;
+  return (SECTIONS.includes(section as ActiveSection) ? section : "home") as ActiveSection;
+}
+
+function getPreviewFromUrl(): boolean {
+  if (typeof window === "undefined") return false;
+  const search = window.location.search;
+  const hash = window.location.hash.slice(1);
+  const fromSearch = new URLSearchParams(search).get("preview") === "projects-cards";
+  const hashQuery = hash.includes("?") ? hash.split("?")[1] : "";
+  const fromHash = hashQuery ? new URLSearchParams(hashQuery).get("preview") === "projects-cards" : false;
+  return fromSearch || fromHash;
 }
 
 const DISSOLVE_MS = 2200;
 const BUILD_MS = 1000;
 
+function subscribeToPreview(callback: () => void) {
+  window.addEventListener("hashchange", callback);
+  return () => window.removeEventListener("hashchange", callback);
+}
+
 export default function MainMenu() {
   const isDesktop = useIsDesktop();
+  const forceProjectsCards = useSyncExternalStore(subscribeToPreview, getPreviewFromUrl, () => false);
   const [activeSection, setActiveSection] = useState<ActiveSection>("home");
   const [aboutSlide, setAboutSlide] = useState(0);
   const [aboutReplayKey, setAboutReplayKey] = useState(0);
@@ -241,8 +259,8 @@ export default function MainMenu() {
               clipPath: buildFor("about") ? "circle(0% at 50% 50%)" : undefined,
             }}
           >
-            <div className="flex h-full flex-col justify-center">
-              {/* Mobile: left/right buttons above content, aligned right; z-10 so they stay clickable */}
+            <div className="flex h-full min-h-0 flex-col md:justify-center">
+              {/* Mobile: left/right buttons below nav; z-10 so they stay clickable */}
               <div className="relative z-10 flex shrink-0 justify-end gap-5 px-4 pt-20 md:hidden">
                 <button
                   type="button"
@@ -266,13 +284,13 @@ export default function MainMenu() {
               {/* Mobile: essay or game */}
               {aboutSlide === 0 ? (
                 <div
-                  className="notepad-scroll flex min-h-0 flex-1 flex-col justify-center overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 pt-4 pb-20 md:hidden"
+                  className="notepad-scroll flex min-h-0 flex-1 flex-col justify-start overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 pt-8 pb-20 md:hidden"
                   style={{
                     animation: buildFor("about") ? "build-item-in 400ms ease-out both" : "none",
                     animationDelay: buildFor("about") ? "100ms" : undefined,
                   }}
                 >
-                  <div className="mx-auto my-auto mt-1 w-full max-w-full space-y-4 pr-2 text-left text-sm leading-relaxed text-neutral-400">
+                  <div className="mx-auto w-full max-w-full space-y-4 pt-2 pr-2 text-left text-sm leading-relaxed text-neutral-400">
                     <p>
                       I grew up in the early 2000s, when gizmos and gadgets were everywhere and every new thing felt a bit magical. The PS2 era in particular showed me what software could do—how it could pull you into a world that felt real. That sense of wonder stuck. As I got older, I kept wanting to recreate a little of that magic for others.
                     </p>
@@ -369,15 +387,21 @@ export default function MainMenu() {
               clipPath: buildFor("projects") ? "circle(0% at 50% 50%)" : undefined,
             }}
           >
-            <div className="relative flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center md:block">
-              <div className="h-[65vh] w-[95vw] min-h-0 min-w-0 shrink-0 md:h-full md:w-full md:max-h-none md:max-w-none">
-                {activeSection === "projects" && (
-                  <TVErrorBoundary>
-                    <RetroTVPortfolio className="h-full min-h-[200px] md:min-h-[320px]" />
-                  </TVErrorBoundary>
-                )}
+            {activeSection === "projects" && (!isDesktop || forceProjectsCards) ? (
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-auto px-4 pt-20 pb-4 md:pt-6 md:pb-6" style={{ WebkitOverflowScrolling: "touch" }}>
+                <ProjectCards />
               </div>
-            </div>
+            ) : (
+              <div className="relative flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center md:block">
+                <div className="h-[65vh] w-[95vw] min-h-0 min-w-0 shrink-0 md:h-full md:w-full md:max-h-none md:max-w-none">
+                  {activeSection === "projects" && (
+                    <TVErrorBoundary>
+                      <RetroTVPortfolio className="h-full min-h-[200px] md:min-h-[320px]" />
+                    </TVErrorBoundary>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           {showDissolveOn("projects") && <DissolveOverlay />}
         </div>
@@ -578,15 +602,6 @@ export default function MainMenu() {
         </nav>
       </header>
 
-      {/* Mobile: Available for work – hidden on About Me game so cannon has space */}
-      {!(activeSection === "about" && aboutSlide === 1) && (
-        <div className="fixed bottom-0 left-0 right-0 z-20 flex flex-col items-center bg-neutral-950/80 pb-8 backdrop-blur-sm md:hidden">
-          <p className="animate-available-glow w-full py-4 text-center text-xs tracking-widest text-neutral-500">
-            Available for work
-          </p>
-        </div>
-      )}
-
       {/* Desktop: unchanged nav and label */}
       <nav
         className="hidden flex-col gap-6 sm:gap-8 md:flex"
@@ -616,10 +631,6 @@ export default function MainMenu() {
           );
         })}
       </nav>
-
-      <p className="animate-available-glow hidden pt-16 text-xs tracking-widest text-neutral-500 sm:pt-20 md:block">
-        Available for work
-      </p>
     </section>
   );
 }

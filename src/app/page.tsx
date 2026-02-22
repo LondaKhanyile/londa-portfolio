@@ -4,7 +4,7 @@ import MouseGlow from "@/components/MouseGlow/MouseGlow";
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen max-md:h-screen max-md:overflow-hidden max-md:overscroll-none">
+    <main className="relative min-h-screen max-md:h-screen max-md:overflow-hidden">
       <AmbientBackground />
       <MouseGlow />
       <MainMenu />
